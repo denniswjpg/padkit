@@ -1,6 +1,3 @@
-// A tiny in-memory PadKit device model. It is NOT used by the shipped app; it
-// exists so the 32-byte encode/decode path can be exercised without hardware
-// (see src/selftest.ts) and, optionally, wired behind a "demo" mode later.
 // SPDX-License-Identifier: MIT
 
 import {
@@ -27,7 +24,7 @@ export interface MockState {
 
 function defaultState(): MockState {
   const rgb: Rgb[] = Array.from({ length: LED_COUNT }, () => ({ r: 0, g: 0, b: 40 }));
-  // Default keymap: slots 0..10 -> F13..F23 (0x68..0x72), no modifiers.
+
   const keymap = Array.from({ length: SLOT_COUNT }, (_, i) => ({ modifier: 0, keycode: 0x68 + i }));
   return {
     brightness: 200,
@@ -41,7 +38,6 @@ function defaultState(): MockState {
   };
 }
 
-/** Simulated firmware/capabilities the mock reports via FW_INFO. */
 const MOCK_CAPS =
   Capability.PERSISTENT_CONFIG |
   Capability.KEYMAP_REMAP |
@@ -52,8 +48,6 @@ const MOCK_CAPS =
 export class MockPadKit {
   state: MockState = defaultState();
 
-  /** Given a 32-byte output report, return the input report the device would
-   * reply with, or null if the command produces no reply. Mutates state. */
   handleOutput(report: Uint8Array): Uint8Array | null {
     const cmd = report[0];
     switch (cmd) {
@@ -105,11 +99,10 @@ export class MockPadKit {
       case Cmd.GET_INFO:
         return this.fwInfo();
       default:
-        return this.ack(cmd ?? 0, 1); // unknown command -> error ack
+        return this.ack(cmd ?? 0, 1);
     }
   }
 
-  /** Build a fake INPUT_EVENT report (for live-monitor demos/tests). */
   inputEvent(control: number, action: number, value = 0): Uint8Array {
     const b = new Uint8Array(REPORT_SIZE);
     b[0] = InputType.INPUT_EVENT;
@@ -130,10 +123,10 @@ export class MockPadKit {
   private fwInfo(): Uint8Array {
     const b = new Uint8Array(REPORT_SIZE);
     b[0] = InputType.FW_INFO;
-    b[1] = 0; // fw major
-    b[2] = 2; // fw minor -> v0.2
-    b[3] = 2; // protocol major
-    b[4] = 0; // protocol minor
+    b[1] = 0;
+    b[2] = 2;
+    b[3] = 2;
+    b[4] = 0;
     b[5] = MOCK_CAPS & 0xff;
     b[6] = (MOCK_CAPS >> 8) & 0xff;
     b[7] = (MOCK_CAPS >> 16) & 0xff;
@@ -154,7 +147,7 @@ export class MockPadKit {
       b[5 + i * 3] = this.state.rgb[i]!.g;
       b[6 + i * 3] = this.state.rgb[i]!.b;
     }
-    // Keymap summary from byte 22; as many {mod,code} pairs as fit.
+
     let o = 22;
     for (let i = 0; i < this.state.keymap.length && o + 1 < REPORT_SIZE; i++, o += 2) {
       b[o] = this.state.keymap[i]!.modifier;

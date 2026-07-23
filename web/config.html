@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PadKit config tool</title>
+    <meta
+      name="description"
+      content="Set the colour and the shortcut for every PadKit key from your browser over WebHID, then write it to the pad."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./src/base.css" />
+    <link rel="stylesheet" href="./src/dark-shell.css" />
+    <link rel="stylesheet" href="./src/motion.css" />
+    <link rel="stylesheet" href="./theme.css" />
+    <script>
+
+      document.documentElement.classList.add('reveal-ready');
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="bar">
+      <div class="wrap bar-in">
+        <a class="brand lift" href="./index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span class="brand-name">PadKit</span>
+        </a>
+        <nav>
+          <a href="./index.html">Overview</a>
+          <a href="./flash.html">Flasher</a>
+          <span id="conn-chip" class="chip" role="status" aria-live="polite">Not connected</span>
+          <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle theme" hidden>
+            <span aria-hidden="true">o</span>
+          </button>
+          <button id="connect-btn" class="btn btn-primary lift sheen" type="button">Connect</button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div id="unsupported" class="banner" hidden>
+        <strong>This browser cannot reach USB devices.</strong>
+        The config tool needs WebHID, which today means desktop Chrome, Edge, or another Chromium
+        browser, over <code>https://</code> or <code>localhost</code>.
+      </div>
+    </div>
+
+    <main id="main" class="wrap">
+      <section id="hero" class="cfg-connect">
+        <p class="eyebrow">Config tool</p>
+        <h1>Plug in your pad.</h1>
+        <p>
+          Once it is connected you can set a colour and a shortcut for every key and every direction
+          of the knob, watch presses arrive live, and write the lot to the pad's own memory. Nothing
+          leaves your machine.
+        </p>
+        <div class="hero-cta">
+          <button id="hero-connect" class="btn btn-primary lift sheen" type="button">Connect a PadKit</button>
+          <a class="btn btn-ghost lift" href="./config.html?demo=1">Look around without one</a>
+        </div>
+        <p class="fineprint">
+          Your browser will ask which device to share. Not flashed yet?
+          <a href="./flash.html">Start with the flasher</a>.
+        </p>
+      </section>
+
+      <div id="app" class="app" hidden>
+        <section class="card" aria-labelledby="keys-h">
+          <div class="card-head">
+            <h2 id="keys-h">Keys and knob</h2>
+            <p class="card-sub">Pick a control to recolour it or change what it sends.</p>
+          </div>
+          <div class="keys-layout">
+            <div class="keygrid" id="keygrid" role="group" aria-label="Key caps"></div>
+            <div class="knobcol" id="knobcol" role="group" aria-label="Knob controls"></div>
+          </div>
+          <div id="editor" class="editor" hidden></div>
+        </section>
+
+        <section class="card" aria-labelledby="light-h">
+          <div class="card-head">
+            <h2 id="light-h">Lighting</h2>
+            <p class="card-sub">Overall brightness, animated effects, and what happens when idle.</p>
+          </div>
+          <div id="lighting" class="lighting"></div>
+        </section>
+
+        <section class="card" aria-labelledby="mon-h">
+          <div class="card-head">
+            <h2 id="mon-h">Live monitor</h2>
+            <p class="card-sub">Every event the pad reports, as it arrives.</p>
+          </div>
+          <div class="monitor">
+            <ol id="monitor-log" class="monitor-log" aria-live="polite"></ol>
+            <button id="monitor-clear" class="btn btn-ghost lift" type="button">Clear</button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer id="savebar" class="savebar" hidden>
+      <div class="savebar-inner">
+        <span id="dirty" class="dirty dirty-clean">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="dirty-text">Saved</span>
+        </span>
+        <div class="savebar-btns">
+          <button id="reset-btn" class="btn btn-ghost lift" type="button">Back to defaults</button>
+          <button id="save-btn" class="btn btn-primary lift sheen" type="button">Write to the pad</button>
+        </div>
+      </div>
+    </footer>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

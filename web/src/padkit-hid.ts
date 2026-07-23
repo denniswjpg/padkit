@@ -1,9 +1,4 @@
-// PadKit WebHID transport — host side of docs/protocol-v2.md.
 // SPDX-License-Identifier: MIT
-//
-// Wraps a single PadKit vendor-HID collection: requests the device, opens the
-// 0xFF60 collection (never the keyboard collection), sends 32-byte output
-// reports and decodes the 32-byte input reports into typed callbacks.
 
 import {
   Action,
@@ -53,7 +48,6 @@ export interface PadKitEvents {
 
 type Listener<K extends keyof PadKitEvents> = PadKitEvents[K];
 
-/** True when the current browser exposes the WebHID API. */
 export function isWebHidSupported(): boolean {
   return typeof navigator !== 'undefined' && !!navigator.hid;
 }
@@ -69,7 +63,7 @@ export class PadKit {
     ack: new Set(),
     error: new Set(),
   };
-  // Pending ACK waiters keyed by the command byte they expect.
+
   private ackWaiters = new Map<number, Array<(ack: Ack) => void>>();
 
   private readonly onInputReport = (event: HIDInputReportEvent) => {
@@ -101,11 +95,6 @@ export class PadKit {
     }
   }
 
-  /**
-   * Prompt the user to pick a PadKit, open its vendor collection, then read
-   * back FW_INFO + CONFIG so the UI can populate. Must be called from a user
-   * gesture (click). Returns the info/config gathered on connect.
-   */
   async connect(): Promise<{ info: FwInfo | null; config: ConfigDump | null }> {
     if (!isWebHidSupported()) {
       throw new Error('WebHID is not available in this browser. Use Chrome or Edge.');
@@ -121,8 +110,6 @@ export class PadKit {
       ],
     });
 
-    // Critical (§1/§9): select the collection whose usagePage == 0xFF60, never
-    // "the first HID path" (that is the keyboard collection and will fail).
     const device = pickVendorDevice(devices);
     if (!device) {
       throw new Error(
@@ -134,18 +121,12 @@ export class PadKit {
     return this.initDevice(device);
   }
 
-  /**
-   * Wire an already-chosen device: open it, attach the input-report listener,
-   * then read back FW_INFO + CONFIG. Shared by connect(), the silent reconnect
-   * path and the offline demo (which passes a synthetic device).
-   */
   private async initDevice(device: HIDDevice): Promise<{ info: FwInfo | null; config: ConfigDump | null }> {
     if (!device.opened) await device.open();
     this.device = device;
     device.addEventListener('inputreport', this.onInputReport);
     if (isWebHidSupported()) navigator.hid!.addEventListener('disconnect', this.onDisconnect);
 
-    // Kick off the initial reads and wait briefly for the replies.
     const infoP = this.once('info', 1500);
     const configP = this.once('config', 1500);
     await this.send(encodeGetInfo());
@@ -157,16 +138,10 @@ export class PadKit {
     return payload;
   }
 
-  /**
-   * Offline demo entry point: attach a caller-provided synthetic device that
-   * answers the protocol from an in-memory model, without prompting for real
-   * hardware. Only used by src/demo.ts; the normal path never calls this.
-   */
   connectDemo(device: HIDDevice): Promise<{ info: FwInfo | null; config: ConfigDump | null }> {
     return this.initDevice(device);
   }
 
-  /** Reconnect silently to an already-granted device (no picker), if present. */
   async tryReconnectGranted(): Promise<boolean> {
     if (!isWebHidSupported()) return false;
     const granted = await navigator.hid!.getDevices();
@@ -183,7 +158,7 @@ export class PadKit {
       try {
         await dev.close();
       } catch {
-        /* ignore */
+
       }
     }
     this.emit('disconnect');
@@ -219,12 +194,11 @@ export class PadKit {
         break;
       }
       default:
-        // Unknown type byte: ignore (forward-compatible per §9).
+
         break;
     }
   }
 
-  /** Resolve on the next event of `name`, or null after `timeoutMs`. */
   private once<K extends 'info' | 'config'>(
     name: K,
     timeoutMs: number,
@@ -242,17 +216,13 @@ export class PadKit {
     });
   }
 
-  /** Send a raw 32-byte output report (report id 0, no report id byte). */
   async send(report: Uint8Array): Promise<void> {
     if (!this.device) throw new Error('Not connected');
-    // Copy into a fresh ArrayBuffer-backed view: guarantees the OS-required
-    // full 32-byte length and a plain (non-shared) buffer for sendReport.
+
     const buf = new Uint8Array(REPORT_SIZE);
     buf.set(report.subarray(0, REPORT_SIZE));
     await this.device.sendReport(0, buf);
   }
-
-  // --- High-level commands (§3) ------------------------------------------
 
   setRgb(colors: Rgb[]): Promise<void> {
     return this.send(encodeSetRgb(colors));
@@ -290,14 +260,12 @@ export class PadKit {
     return this.send(encodeGetInfo());
   }
 
-  /** SAVE (0x06) and wait for the ACK. Rejects on timeout or error status. */
   async save(timeoutMs = 2000): Promise<Ack> {
     const ackP = this.waitAck(Cmd.SAVE, timeoutMs);
     await this.send(encodeSave());
     return ackP;
   }
 
-  /** LOAD_DEFAULTS (0x07) and wait for the ACK, then re-read config. */
   async loadDefaults(timeoutMs = 2000): Promise<Ack> {
     const ackP = this.waitAck(Cmd.LOAD_DEFAULTS, timeoutMs);
     await this.send(encodeLoadDefaults());
@@ -328,12 +296,11 @@ export class PadKit {
   }
 }
 
-/** Choose the HIDDevice exposing the 0xFF60 vendor collection. */
 export function pickVendorDevice(devices: HIDDevice[]): HIDDevice | null {
   for (const d of devices) {
     if (d.collections.some((c) => c.usagePage === VENDOR_USAGE_PAGE)) return d;
   }
-  // Fallback: some platforms report a single collection view; match by usage.
+
   for (const d of devices) {
     if (d.collections.some((c) => c.usage === VENDOR_USAGE)) return d;
   }

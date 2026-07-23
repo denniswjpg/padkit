@@ -15,12 +15,12 @@ Any **CH552 / CH552G macropad with 6 keys + 1 rotary knob** that enumerates as U
 | | What | Install |
 |---|---|---|
 | **Bind keys** | Firmware sends standard **F13–F23** — bind them in any OS, AutoHotkey, Karabiner, Home Assistant, anything. | flash once |
-| **Configure in the browser** | [**Open the config tool**](https://denniswjpg.github.io/padkit/) → set per-key colors, brightness, and what shortcut each key sends → save to the pad. | none (Chrome/Edge) |
+| **Configure in the browser** | [**Open the config tool**](https://denniswjpg.github.io/padkit/config.html) → set per-key colors, brightness, and what shortcut each key sends → save to the pad. | none (Chrome/Edge) |
 | **Automate & integrate** | The [`padkitd`](daemon/) daemon turns keys/knob into shell commands, HTTP webhooks, or event-driven LEDs — and exposes an **MCP server** so AI agents can drive the pad. | one binary |
 
-[![PadKit browser config tool](docs/img/config-demo.png)](https://denniswjpg.github.io/padkit/)
+[![PadKit browser config tool](docs/img/config-demo.png)](https://denniswjpg.github.io/padkit/config.html)
 
-*↑ the browser config tool — [try it with no hardware](https://denniswjpg.github.io/padkit/?demo=1).*
+*↑ the browser config tool — [try it with no hardware](https://denniswjpg.github.io/padkit/config.html?demo=1).*
 
 ## How fast
 
@@ -28,7 +28,7 @@ Any **CH552 / CH552G macropad with 6 keys + 1 rotary knob** that enumerates as U
 
 1. Get the pad into bootloader mode — [open the case, bridge **SW2** while plugging in USB](docs/flashing.md) (photos in the guide).
 2. [**Flash it in the browser →**](https://denniswjpg.github.io/padkit/flash.html) (Connect → done).
-3. Replug, [**open the config tool →**](https://denniswjpg.github.io/padkit/), and set your colors/keys.
+3. Replug, [**open the config tool →**](https://denniswjpg.github.io/padkit/config.html), and set your colors/keys.
 
 **Prefer the terminal?** `cd flasher && make` then `./flasher/isp55e0 -f firmware/padkit.bin`. Grab prebuilt `padkit.bin` and the `padkitd` binaries from the [latest release](https://github.com/denniswjpg/padkit/releases/latest).
 

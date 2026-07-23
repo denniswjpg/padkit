@@ -1,11 +1,4 @@
-// Copy the canonical firmware image into public/ so the built site embeds it.
 // SPDX-License-Identifier: MIT
-//
-// Runs as an npm `prebuild`/`predev` step. The firmware lives at
-// ../../firmware/padkit.bin (the single source of truth, produced by the SDCC
-// build). Copying it at build time — instead of hand-embedding a base64 blob —
-// means the flasher can never ship a stale image: whatever is in firmware/ is
-// what the browser flashes.
 
 import { copyFileSync, mkdirSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';

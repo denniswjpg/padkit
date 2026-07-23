@@ -2,135 +2,254 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PadKit: open firmware for the 6-key rotary macropad</title>
     <meta
       name="description"
-      content="Zero-install browser config tool for the PadKit CH552 macropad. Live-edit LEDs, brightness and the keymap over WebHID, then save to the pad's flash."
+      content="PadKit is open firmware for the cheap CH552 macropad with six keys and a rotary knob. Flash it from your browser, then set a colour and a shortcut for every key."
     />
-    <title>PadKit Config</title>
-    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./src/base.css" />
+    <link rel="stylesheet" href="./src/dark-shell.css" />
+    <link rel="stylesheet" href="./src/motion.css" />
+    <link rel="stylesheet" href="./theme.css" />
+    <script>
+
+      document.documentElement.classList.add('reveal-ready');
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
 
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true">
-          <span class="cap"></span><span class="cap"></span><span class="cap"></span>
-          <span class="cap"></span><span class="cap"></span><span class="cap"></span>
-        </span>
-        <span class="brand-text">
-          <strong>PadKit</strong>
-          <small>Config</small>
-        </span>
-      </div>
-
-      <div class="topbar-actions">
-        <span id="conn-chip" class="chip chip-idle" role="status" aria-live="polite">
-          Not connected
-        </span>
-        <a class="btn btn-ghost" href="https://github.com/denniswjpg/padkit" target="_blank" rel="noopener">GitHub ↗</a>
-        <button
-          id="theme-toggle"
-          class="icon-btn"
-          type="button"
-          aria-label="Toggle light and dark theme"
-          title="Toggle theme"
-        >
-          <span class="theme-icon" aria-hidden="true">◐</span>
-        </button>
-        <button id="connect-btn" class="btn btn-primary" type="button">Connect</button>
+    <header class="bar">
+      <div class="wrap bar-in">
+        <a class="brand lift" href="./index.html">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span class="brand-name">PadKit</span>
+        </a>
+        <nav>
+          <a href="#device">Device</a>
+          <a href="#start">Setup</a>
+          <a href="#uses">Uses</a>
+          <a href="https://github.com/denniswjpg/padkit">Source</a>
+          <a class="btn btn-primary lift sheen" href="./flash.html">Flash your pad</a>
+        </nav>
       </div>
     </header>
 
-    <div id="unsupported" class="banner banner-error" hidden>
-      <strong>This browser can't talk to USB devices.</strong>
-      WebHID is required. Please use <b>Google Chrome</b> or <b>Microsoft Edge</b> on desktop
-      (over <code>https://</code> or <code>localhost</code>).
-    </div>
-
     <main id="main">
-      <!-- Disconnected hero -->
-      <section id="hero" class="hero">
-        <h1>Configure your macropad in the browser</h1>
-        <p class="lead">
-          Connect a PadKit over USB to live-edit key colors, brightness, lighting effects and what
-          each key types — then save it to the pad's own flash. No install, no account, nothing
-          leaves your machine.
-        </p>
-        <button id="hero-connect" class="btn btn-primary btn-lg" type="button">
-          Connect a PadKit
-        </button>
-        <p class="hint">
-          Requires Chrome or Edge on desktop. Your browser will ask which device to share.
-        </p>
-        <ul class="hero-points">
-          <li><b>Keys</b> — recolor each cap and remap its shortcut.</li>
-          <li><b>Lighting</b> — brightness, effects and idle dimming.</li>
-          <li><b>Live monitor</b> — press a key and watch it register.</li>
+      <section class="hero wrap">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow" data-reveal>CH552G / 6 keys / 1 rotary knob</p>
+            <h1 data-reveal>Six keys and a knob that do <em>exactly</em> what you say.</h1>
+            <p class="deck" data-reveal>
+              PadKit is open firmware for the cheap macropad sold under a dozen different names.
+              Flash it from this page in about a minute, then give every key its own colour and its
+              own shortcut. The settings live on the pad itself, so they follow it to any computer.
+            </p>
+            <div class="hero-cta" data-reveal>
+              <a class="btn btn-primary lift sheen" href="./flash.html">Flash it in your browser</a>
+              <a class="btn btn-ghost lift" href="./config.html">Open the config tool</a>
+            </div>
+            <p class="fineprint" data-reveal>
+              Chrome or Edge on the desktop. Nothing to install on macOS or Linux.
+              <a href="./config.html?demo=1">Try the config tool without a pad</a>.
+            </p>
+          </div>
+
+          <div class="hero-stage" data-reveal>
+            <div class="stage-frame">
+              <div id="hero-pad"></div>
+            </div>
+            <p class="press-hint" id="press-hint">Press F13 to F18, or click a key</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec wrap" id="device">
+        <div class="ident">
+          <figure class="shot" data-reveal>
+            <img
+              src="./img/PadKit_device.webp"
+              alt="The reference PadKit macropad: six black keycaps in two rows and a metal knob"
+              width="960"
+              height="720"
+              loading="lazy"
+            />
+          </figure>
+          <div>
+            <p class="eyebrow" data-reveal>Is this your pad?</p>
+            <h2 data-reveal data-underline>Six keys, one knob, a CH552 inside.</h2>
+            <p class="deck" data-reveal>
+              The reference unit was sold as a "SinLoon Mini Macro Programmable Keyboard, 6 Keys 1
+              Knob". The same board turns up on AliExpress and eBay as a generic knob macropad. If
+              yours matches the photo and reports the USB id below, PadKit runs on it.
+            </p>
+            <dl class="spec" data-reveal>
+              <div><dt>Microcontroller</dt><dd>CH552G, 16 KB flash</dd></div>
+              <div><dt>USB id, stock</dt><dd>1189:8890</dd></div>
+              <div><dt>USB id, bootloader</dt><dd>4348:55e0</dd></div>
+              <div><dt>Controls</dt><dd>6 keys, 5 knob actions</dd></div>
+              <div><dt>Settings stored</dt><dd>on the pad, in DataFlash</dd></div>
+            </dl>
+            <p class="fineprint" data-reveal>
+              Wiring varies between clones. The repository ships a scanner sketch that maps yours if
+              the defaults land on the wrong key.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec wrap" id="start">
+        <div class="sec-head">
+          <p class="eyebrow" data-reveal>Getting there</p>
+          <h2 data-reveal data-underline>Three stages, and you can stop after the second.</h2>
+          <p class="deck" data-reveal>
+            Flashing is a one-off. After that everything happens in the browser, and the daemon is
+            only worth installing if you want keys to run things on your machine.
+          </p>
+        </div>
+        <div class="path">
+          <article class="path-step lift" data-reveal>
+            <span class="path-num">01</span>
+            <h3>Flash the firmware</h3>
+            <p>
+              Your browser talks to the chip's built-in bootloader over WebUSB. That bootloader sits
+              in read-only ROM, so a failed flash is always recoverable.
+            </p>
+            <a class="btn btn-primary lift sheen" href="./flash.html">Start flashing</a>
+            <small>Guided, about a minute</small>
+          </article>
+          <article class="path-step lift" data-reveal>
+            <span class="path-num">02</span>
+            <h3>Pick colours and keys</h3>
+            <p>
+              Choose a colour and a shortcut for each key, and for each direction of the knob.
+              Everything is written straight to the pad and survives unplugging.
+            </p>
+            <a class="btn btn-ghost lift" href="./config.html">Open the config tool</a>
+            <small>No account, nothing uploaded</small>
+          </article>
+          <article class="path-step lift" data-reveal>
+            <span class="path-num">03</span>
+            <h3>Wire it into things</h3>
+            <p>
+              Optional. The <code>padkitd</code> companion turns presses into shell commands or
+              webhooks, and exposes an MCP server so an AI agent can drive the pad and its lights.
+            </p>
+            <a class="btn btn-ghost lift" href="https://github.com/denniswjpg/padkit/tree/main/daemon">Read about the daemon</a>
+            <small>One binary, Go</small>
+          </article>
+        </div>
+      </section>
+
+      <section class="sec wrap" id="uses">
+        <div class="sec-head">
+          <p class="eyebrow" data-reveal>In practice</p>
+          <h2 data-reveal data-underline>What people put on the keys.</h2>
+          <p class="deck" data-reveal>
+            The firmware sends F13 to F23, which no application claims by default. Bind them in
+            macOS, Windows, Linux, AutoHotkey, Karabiner, or Home Assistant, the same way you bind
+            any other key.
+          </p>
+        </div>
+        <ul class="uses">
+          <li class="lift" data-reveal><b>Calls.</b> <span>Mute and unmute on a key, camera on another, volume on the knob.</span></li>
+          <li class="lift" data-reveal><b>Media.</b> <span>Play, pause and skip on the keys, scrub or change volume with the knob.</span></li>
+          <li class="lift" data-reveal><b>Coding.</b> <span>Run the tests, format the file, stage and commit without leaving the keyboard.</span></li>
+          <li class="lift" data-reveal><b>Home Assistant.</b> <span>A scene on each key, and the knob dims the lights through a webhook.</span></li>
+          <li class="lift" data-reveal><b>Editing.</b> <span>Undo and redo on the knob, zoom on push and turn, export on a key.</span></li>
+          <li class="lift" data-reveal><b>AI coding agents.</b> <span>Approve or interrupt from a key, scroll the output with the knob, and let the agent light a key when it needs you. This is what PadKit was built for.</span></li>
         </ul>
       </section>
 
-      <!-- Connected app -->
-      <div id="app" class="app" hidden>
-        <section class="card" aria-labelledby="keys-h">
-          <div class="card-head">
-            <h2 id="keys-h">Keys</h2>
-            <p class="card-sub">Select a control to recolor it or change what it types.</p>
+      <section class="sec wrap" id="map">
+        <div class="map-grid">
+          <div class="sec-head sec-head-left">
+            <p class="eyebrow" data-reveal>Reference</p>
+            <h2 data-reveal data-underline>What each control sends.</h2>
+            <p class="deck" data-reveal>
+              Out of the box, before you change anything in the config tool. Keys report a real
+              press and release, so holding works as well as tapping.
+            </p>
           </div>
+          <table class="map" data-reveal>
+            <thead>
+              <tr><th scope="col">Control</th><th scope="col">Sends</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Keys 1 to 6</td><td>F13 F14 F15 F16 F17 F18</td></tr>
+              <tr><td>Knob, turn left</td><td>F19</td></tr>
+              <tr><td>Knob, press</td><td>F20</td></tr>
+              <tr><td>Knob, turn right</td><td>F21</td></tr>
+              <tr><td>Knob, held and turned left</td><td>F22</td></tr>
+              <tr><td>Knob, held and turned right</td><td>F23</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-          <div class="keys-layout">
-            <div class="keygrid" id="keygrid" role="group" aria-label="Key caps"></div>
-            <div class="knobcol" id="knobcol" role="group" aria-label="Knob controls"></div>
-          </div>
-
-          <div id="editor" class="editor" hidden></div>
-        </section>
-
-        <section class="card" aria-labelledby="light-h">
-          <div class="card-head">
-            <h2 id="light-h">Lighting</h2>
-            <p class="card-sub">Global brightness, animated effects and idle behavior.</p>
-          </div>
-          <div id="lighting" class="lighting"></div>
-        </section>
-
-        <section class="card" aria-labelledby="mon-h">
-          <div class="card-head">
-            <h2 id="mon-h">Live monitor</h2>
-            <p class="card-sub">Every physical event the pad reports appears here.</p>
-          </div>
-          <div class="monitor">
-            <ol id="monitor-log" class="monitor-log" aria-live="polite"></ol>
-            <button id="monitor-clear" class="btn btn-ghost btn-sm" type="button">Clear</button>
-          </div>
-        </section>
-
-        <section class="card card-muted" aria-labelledby="flash-h">
-          <div class="card-head">
-            <h2 id="flash-h">Firmware</h2>
-            <p class="card-sub">Update the pad's firmware over USB (separate tool).</p>
-          </div>
-          <a class="btn btn-ghost" href="./flash.html">Open firmware flasher →</a>
-        </section>
-      </div>
+      <section class="sec wrap" id="agent">
+        <div class="sec-head">
+          <p class="eyebrow" data-reveal>Shortcut</p>
+          <h2 data-reveal data-underline>Let an agent set it up for you.</h2>
+          <p class="deck" data-reveal>
+            The repository carries a machine-readable spec covering the input map, the HID protocol
+            for lights and keymap, and the daemon's shell, webhook and MCP actions. Paste this to
+            Claude or any other coding agent, fill in the blank, and it can write your keybindings or
+            a daemon config for you.
+          </p>
+        </div>
+        <blockquote class="prompt" id="agent-prompt" data-reveal>I have a <b>PadKit</b> macropad, six keys plus a rotary knob, running open-source CH552 firmware. Its full spec is at https://github.com/denniswjpg/padkit/blob/main/AGENTS.md, read that first. Then help me set the pad up to <b>&lt;what you want it to do&gt;</b>. I am on <b>&lt;macOS / Windows / Linux&gt;</b> and I would rather use <b>&lt;plain OS keybindings / the padkitd daemon / the MCP server&gt;</b>. Give me the exact config or the exact steps.</blockquote>
+        <div class="copy-row" data-reveal>
+          <button class="btn btn-ghost lift" type="button" id="copy-prompt">Copy the prompt</button>
+          <span class="copy-note" id="copy-note"></span>
+        </div>
+      </section>
     </main>
 
-    <footer id="savebar" class="savebar" hidden>
-      <div class="savebar-inner">
-        <span id="dirty" class="dirty dirty-clean">
-          <span class="dot" aria-hidden="true"></span>
-          <span class="dirty-text">Saved</span>
-        </span>
-        <div class="savebar-btns">
-          <button id="reset-btn" class="btn btn-ghost" type="button">Reset to defaults</button>
-          <button id="save-btn" class="btn btn-primary" type="button">Save to device</button>
+    <footer class="foot">
+      <div class="wrap">
+        <div class="foot-grid">
+          <div>
+            <h3>Project</h3>
+            <ul>
+              <li><a href="https://github.com/denniswjpg/padkit">Source on GitHub</a></li>
+              <li><a href="https://github.com/denniswjpg/padkit/releases/latest">Latest release</a></li>
+              <li><a href="https://github.com/denniswjpg/padkit/blob/main/docs/flashing.md">Flashing guide</a></li>
+              <li><a href="https://github.com/denniswjpg/padkit/blob/main/AGENTS.md">Full spec</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3>Tools</h3>
+            <ul>
+              <li><a href="./flash.html">Browser flasher</a></li>
+              <li><a href="./config.html">Config tool</a></li>
+              <li><a href="./config.html?demo=1">Config tool, no hardware</a></li>
+              <li><a href="https://github.com/denniswjpg/padkit/tree/main/daemon">padkitd and MCP</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3>Standing on</h3>
+            <ul>
+              <li><a href="https://github.com/wagiminator">wagiminator, the CH552 stack</a></li>
+              <li><a href="https://github.com/frank-zago/isp55e0">frank-zago, isp55e0</a></li>
+              <li><a href="https://github.com/the-via/app">QMK and VIA, the vendor HID approach</a></li>
+            </ul>
+          </div>
         </div>
+        <p>
+          Firmware under CC BY-SA, flasher under GPLv3, web and daemon under MIT. Each directory
+          states its own licence.
+        </p>
       </div>
     </footer>
 
-    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-
-    <script type="module" src="./src/main.ts"></script>
+    <script type="module" src="./landing.ts"></script>
   </body>
 </html>

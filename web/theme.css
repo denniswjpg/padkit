@@ -1,0 +1,83 @@
+/* SPDX-License-Identifier: MIT */
+
+:root {
+  --bg: #08090a;
+  --surface-1: #101113;
+  --surface-2: #16181b;
+  --surface-3: #1d1f23;
+
+  --text: #f7f8f8;
+  --text-2: #9ca1ab;
+  --text-3: #6a6f78;
+
+  --line: #1c1d21;
+  --line-2: #26272c;
+  --line-strong: #383a41;
+
+  --accent: #5e6ad2;
+  --accent-hover: #6c78e4;
+  --accent-ink: #ffffff;
+  --accent-text: #a7adf5;
+  --accent-link: #b4b9f7;
+  --accent-weak: color-mix(in srgb, var(--accent) 22%, transparent);
+  --accent-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(0, 0, 0, 0.5);
+
+  --ok: #4cc38a;
+  --bad: #eb5757;
+
+  --radius: 14px;
+  --radius-sm: 9px;
+  --wrap: 1120px;
+  --font: 'Inter', system-ui, sans-serif;
+  --display: 'Inter', system-ui, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --pad-board-bg: linear-gradient(165deg, #202225, #141517);
+  --pad-board-edge: #2b2d31;
+  --pad-board-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --pad-cap-bg: linear-gradient(180deg, #1c1e21, #151619);
+  --pad-cap-edge: #303237;
+  --pad-cap-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 0 rgba(0, 0, 0, 0.5);
+  --pad-knob-bg: radial-gradient(70% 70% at 50% 30%, #2a2c31, #16171a);
+  --pad-knob-ring: rgba(255, 255, 255, 0.12);
+  --pad-knob-mark: rgba(255, 255, 255, 0.7);
+  --pad-cap-label: rgba(255, 255, 255, 0.62);
+  --pad-glow-idle: 0.26;
+
+  --stage-bg: linear-gradient(180deg, #131417, #0e0f11);
+  --stage-shadow: 0 40px 80px -50px rgba(0, 0, 0, 0.9);
+
+  color-scheme: dark;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 70vh;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 55% at 50% -8%,
+    color-mix(in srgb, var(--accent) 22%, transparent),
+    transparent 70%
+  );
+  opacity: 0.6;
+}
+
+.stage-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--accent) 55%, transparent),
+    transparent
+  );
+}

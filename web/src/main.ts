@@ -1,5 +1,4 @@
-// PadKit Config — UI entry point. SPDX-License-Identifier: MIT
-// Framework-free: builds the DOM directly and drives the WebHID transport.
+// SPDX-License-Identifier: MIT
 
 import {
   PadKit,
@@ -26,10 +25,6 @@ import {
 import { KEYCODE_GROUPS, MODIFIERS, shortcutLabel } from './keycodes.ts';
 import { isDemoRequested, startDemo } from './demo.ts';
 
-// ---------------------------------------------------------------------------
-// Small DOM helpers
-// ---------------------------------------------------------------------------
-
 type Props = Record<string, unknown>;
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -55,10 +50,6 @@ function $<T extends HTMLElement = HTMLElement>(id: string): T {
   return n as T;
 }
 
-// ---------------------------------------------------------------------------
-// Color helpers
-// ---------------------------------------------------------------------------
-
 function toHex(c: Rgb): string {
   const h = (n: number) => n.toString(16).padStart(2, '0');
   return `#${h(c.r)}${h(c.g)}${h(c.b)}`;
@@ -71,15 +62,11 @@ function fromHex(hex: string): Rgb {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Control metadata
-// ---------------------------------------------------------------------------
-
 interface ControlMeta {
   slot: number;
   name: string;
-  isKey: boolean; // has an addressable LED
-  cap?: number; // capability required, if any
+  isKey: boolean;
+  cap?: number;
 }
 const CONTROLS: ControlMeta[] = [
   { slot: 0, name: 'Key 1', isKey: true },
@@ -108,10 +95,6 @@ const ACTION_LABEL: Record<number, string> = {
   [Action.PUSH_TURN_CCW]: 'push-turn left',
 };
 
-// ---------------------------------------------------------------------------
-// State
-// ---------------------------------------------------------------------------
-
 interface State {
   info: FwInfo | null;
   caps: number;
@@ -120,8 +103,8 @@ interface State {
   effectSpeed: number;
   effectColor: Rgb;
   flags: number;
-  rgb: Rgb[]; // 6
-  keymap: { modifier: number; keycode: number }[]; // 11
+  rgb: Rgb[];
+  keymap: { modifier: number; keycode: number }[];
   idleDim: boolean;
   idleTimeoutMs: number;
   selected: number | null;
@@ -129,7 +112,7 @@ interface State {
 }
 
 function defaultKeymap() {
-  // Factory defaults per protocol §7: slots 0..10 -> F13..F23 (0x68..0x72).
+
   return Array.from({ length: SLOT_COUNT }, (_, i) => ({ modifier: 0, keycode: 0x68 + i }));
 }
 
@@ -151,10 +134,6 @@ const state: State = {
 
 const pad = new PadKit();
 
-// ---------------------------------------------------------------------------
-// Theme
-// ---------------------------------------------------------------------------
-
 function initTheme() {
   const saved = localStorage.getItem('padkit-theme');
   if (saved === 'light' || saved === 'dark') {
@@ -169,10 +148,6 @@ function initTheme() {
     localStorage.setItem('padkit-theme', next);
   });
 }
-
-// ---------------------------------------------------------------------------
-// Toast + dirty
-// ---------------------------------------------------------------------------
 
 let toastTimer: number | undefined;
 function toast(msg: string, isErr = false) {
@@ -193,10 +168,6 @@ function renderDirty() {
   d.className = state.dirty ? 'dirty dirty-dirty' : 'dirty dirty-clean';
   d.querySelector('.dirty-text')!.textContent = state.dirty ? 'Unsaved' : 'Saved';
 }
-
-// ---------------------------------------------------------------------------
-// Connection flow
-// ---------------------------------------------------------------------------
 
 function setConnUi(connected: boolean) {
   const chip = $('conn-chip');
@@ -226,8 +197,7 @@ function applyConfig(cfg: ConfigDump | null) {
   state.flags = cfg.flags;
   state.idleDim = (cfg.flags & Flag.IDLE_DIM_ON) !== 0;
   for (let i = 0; i < KEY_COUNT; i++) if (cfg.rgb[i]) state.rgb[i] = cfg.rgb[i]!;
-  // CONFIG_DUMP carries a truncated keymap summary (slots from 0 up). Overlay
-  // whatever the device reported onto the factory defaults.
+
   state.keymap = defaultKeymap();
   cfg.keymap.forEach((entry, i) => {
     if (i < state.keymap.length && (entry.keycode !== 0 || entry.modifier !== 0)) {
@@ -250,7 +220,7 @@ async function connect() {
     if (!info) toast('Connected, but the pad did not report firmware info', true);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    // A user cancelling the chooser is not an error worth shouting about.
+
     if (!/no device selected|cancel/i.test(msg)) toast(msg, true);
   }
 }
@@ -258,10 +228,6 @@ async function connect() {
 async function disconnect() {
   await pad.disconnect();
 }
-
-// ---------------------------------------------------------------------------
-// Rendering
-// ---------------------------------------------------------------------------
 
 function renderAll() {
   renderKeys();
@@ -271,7 +237,7 @@ function renderAll() {
 }
 
 function capOK(bit: number): boolean {
-  // If we never got FW_INFO, don't hard-block features (assume present).
+
   if (state.info === null) return true;
   return hasCapability(state.caps, bit);
 }
@@ -307,7 +273,7 @@ function renderKnob() {
   const col = $('knobcol');
   col.innerHTML = '';
   for (const m of CONTROLS.filter((c) => !c.isKey)) {
-    if (m.cap && !capOK(m.cap)) continue; // hide push-turn if unsupported
+    if (m.cap && !capOK(m.cap)) continue;
     const btn = el('button', {
       class: 'knobctl',
       type: 'button',
@@ -332,7 +298,7 @@ function selectControl(slot: number) {
 
 function buildKeycodeSelect(current: number, onChange: (code: number) => void): HTMLSelectElement {
   const sel = el('select', { 'aria-label': 'Key to send' });
-  sel.append(el('option', { value: '0', text: '— None (disabled) —' }));
+  sel.append(el('option', { value: '0', text: 'Nothing (key does not send)' }));
   for (const grp of KEYCODE_GROUPS) {
     const og = document.createElement('optgroup');
     og.label = grp.group;
@@ -384,7 +350,6 @@ function renderEditor() {
   head.append(headBtns);
   box.append(head);
 
-  // Color (keys only — knob controls have no LED).
   if (m.isKey) {
     const field = el('div', { class: 'field' });
     field.append(el('span', { class: 'field-label', text: 'Cap color' }));
@@ -400,12 +365,11 @@ function renderEditor() {
       pad.setRgb(state.rgb).catch(() => {});
       markDirty();
     });
-    row.append(color, el('span', { class: 'gated-note', text: 'Live preview — updates the pad instantly.' }));
+    row.append(color, el('span', { class: 'gated-note', text: 'Changes show on the pad straight away.' }));
     field.append(row);
     box.append(field);
   }
 
-  // Shortcut (gated on keymap-remap capability).
   const scField = el('div', { class: 'field' });
   scField.append(el('span', { class: 'field-label', text: 'Sends' }));
   if (!capOK(Capability.KEYMAP_REMAP)) {
@@ -450,10 +414,6 @@ function pushKey(slot: number, preview: HTMLElement) {
   markDirty();
 }
 
-// ---------------------------------------------------------------------------
-// Lighting section
-// ---------------------------------------------------------------------------
-
 function effectParams(): number[] {
   const c = state.effectColor;
   switch (state.effect) {
@@ -461,7 +421,7 @@ function effectParams(): number[] {
     case Effect.SCANNER:
       return [state.effectSpeed, c.r, c.g, c.b];
     case Effect.REACTIVE:
-      return [state.effectSpeed, c.r, c.g, c.b]; // [2]=fade reuses speed slider
+      return [state.effectSpeed, c.r, c.g, c.b];
     case Effect.RAINBOW:
       return [state.effectSpeed];
     default:
@@ -477,7 +437,6 @@ function renderLighting() {
   const box = $('lighting');
   box.innerHTML = '';
 
-  // Brightness
   {
     const field = el('div', { class: 'field' });
     field.append(el('label', { for: 'brightness', text: 'Brightness' }));
@@ -501,7 +460,6 @@ function renderLighting() {
     box.append(field);
   }
 
-  // Effect
   {
     const field = el('div', { class: 'field' });
     field.append(el('label', { for: 'effect', text: 'Effect' }));
@@ -528,7 +486,6 @@ function renderLighting() {
     });
     const row = el('div', { class: 'row' }, [sel]);
 
-    // Animated effects expose speed + color params.
     if (state.effect !== Effect.STATIC) {
       if (state.effect !== Effect.RAINBOW) {
         const color = el('input', {
@@ -562,7 +519,6 @@ function renderLighting() {
     box.append(field);
   }
 
-  // Idle dim (gated)
   if (capOK(Capability.IDLE_DIM)) {
     const field = el('div', { class: 'field' });
     field.append(el('span', { class: 'field-label', text: 'Idle dimming' }));
@@ -595,7 +551,6 @@ function renderLighting() {
     box.append(field);
   }
 
-  // Advanced: suppress keyboard flag
   {
     const field = el('div', { class: 'field' });
     field.append(el('span', { class: 'field-label', text: 'Advanced' }));
@@ -608,15 +563,11 @@ function renderLighting() {
       pad.setFlags(state.flags).catch(() => {});
       markDirty();
     });
-    toggleWrap.append(cb, 'Suppress keyboard output (input still reported here)');
+    toggleWrap.append(cb, 'Stop the pad sending keystrokes (events still show up here)');
     field.append(toggleWrap);
     box.append(field);
   }
 }
-
-// ---------------------------------------------------------------------------
-// Live monitor
-// ---------------------------------------------------------------------------
 
 const MAX_LOG = 60;
 function logEvent(ev: InputEvent) {
@@ -640,7 +591,7 @@ function pulse(slot: number) {
   const node = document.querySelector<HTMLElement>(`[data-slot="${slot}"]`);
   if (!node) return;
   node.classList.remove('hit');
-  void node.offsetWidth; // reflow so the animation restarts
+  void node.offsetWidth;
   node.classList.add('hit');
 }
 
@@ -649,10 +600,6 @@ function resetMonitor() {
   log.innerHTML = '';
   log.append(el('li', { class: 'ml-empty', text: 'Press a key or turn the knob…' }));
 }
-
-// ---------------------------------------------------------------------------
-// Save / reset
-// ---------------------------------------------------------------------------
 
 async function save() {
   if (!capOK(Capability.PERSISTENT_CONFIG)) {
@@ -679,7 +626,7 @@ async function reset() {
   btn.disabled = true;
   try {
     await pad.loadDefaults();
-    // loadDefaults re-requests CONFIG_DUMP; the config listener repopulates.
+
     toast('Reset to defaults');
     state.dirty = false;
     renderDirty();
@@ -689,10 +636,6 @@ async function reset() {
     btn.disabled = false;
   }
 }
-
-// ---------------------------------------------------------------------------
-// Wire up
-// ---------------------------------------------------------------------------
 
 function main() {
   initTheme();
@@ -725,7 +668,7 @@ function main() {
     }
   });
   pad.on('config', (cfg) => {
-    // Fired on connect and after LOAD_DEFAULTS.
+
     applyConfig(cfg);
     if (pad.connected) renderAll();
   });
@@ -740,10 +683,6 @@ function main() {
   });
   pad.on('error', (m) => toast(m, true));
 
-  // Offline demo mode (`?demo=1` / `#demo`): wire the in-memory mock device
-  // into the same UI so the tool can be previewed with no hardware. The
-  // info/config/connect listeners above populate state exactly as for a real
-  // pad; we then open a key so the color + shortcut editor is on show.
   if (demo) {
     startDemo(pad)
       .then(() => selectControl(0))
@@ -751,8 +690,6 @@ function main() {
     return;
   }
 
-  // Offer a silent reconnect if the user already granted a device. State is
-  // populated by the info/config/connect listeners above.
   pad.tryReconnectGranted().catch(() => {});
 }
 

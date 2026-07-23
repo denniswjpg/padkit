@@ -1,9 +1,11 @@
 # PadKit WebUSB flasher — implementation notes
 
-This documents the browser flasher in `src/flash.ts` + `src/isp.ts`: what the
+This documents the browser flasher in `src/flash-core.ts` + `src/isp.ts`: what the
 protocol does, which lines of the reference C flasher each step mirrors, what is
 covered by automated tests, and what is **unverified until a real flash on real
 hardware**. Read the "First-flash watch-list" before flashing a physical pad.
+The transport and state machine live in `src/flash-core.ts`; the guided page UI
+that drives them lives in `src/flash-wizard.ts` (`flash.html` mounts it).
 
 The reference/ground truth is `../flasher/isp55e0.c` (a working, patched libusb
 CLI). The browser flasher is a faithful port of its byte layouts and command
@@ -17,7 +19,7 @@ Target: WCH CH552G (8051), flashed over its unbrickable mask-ROM bootloader
 (USB `4348:55e0`, some units `1a86:55e0`, vendor-specific interface class 0xFF).
 On macOS + Chrome no driver is needed.
 
-Transport (`flash.ts`):
+Transport (`flash-core.ts`):
 
 | Step | WebUSB | isp55e0.c |
 |---|---|---|
@@ -29,7 +31,7 @@ Transport (`flash.ts`):
 Endpoints are also auto-discovered from the interface descriptor, defaulting to
 `2` if not found (`findEndpoints`).
 
-Protocol sequence (`isp.ts` builds the frames; `flash.ts` `runFlash` orders
+Protocol sequence (`isp.ts` builds the frames; `flash-core.ts` `runFlash` orders
 them — identical order to `isp55e0.c main()`):
 
 1. **CMD_CHIP_TYPE (0xa1)** — identify. Request carries the ASCII signature
@@ -128,7 +130,7 @@ transfers/the silent reboot all work as ported.
 ## Reconnect UX (kills the short-bootloader-window race)
 
 The CH552 only stays enumerated as `4348:55e0` for a few seconds before it boots
-the app. `flash.ts` handles this three ways:
+the app. `flash-core.ts` handles this three ways:
 
 - **Timing guidance** in the reminder banner + a hint line under the buttons.
 - **`getDevices()` auto-detect** — on load (and after each flash) we call

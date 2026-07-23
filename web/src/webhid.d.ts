@@ -1,7 +1,3 @@
-// Minimal ambient declarations for the subset of WebHID this app uses.
-// WebHID is a WICG spec not present in TypeScript's default lib.dom, so we
-// declare only what padkit-hid.ts touches. Kept small on purpose (auditable,
-// zero external @types dependency).
 // SPDX-License-Identifier: MIT
 
 interface HIDCollectionInfo {

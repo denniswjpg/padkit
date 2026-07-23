@@ -2,7 +2,7 @@
   "name": "padkit-web",
   "version": "0.2.0",
   "private": true,
-  "description": "Zero-install WebHID config tool for the PadKit CH552 macropad — live-edit LEDs, brightness and keymap, then save to the pad's flash. No backend.",
+  "description": "Zero-install WebHID config tool for the PadKit CH552 macropad \u2014 live-edit LEDs, brightness and keymap, then save to the pad's flash. No backend.",
   "license": "MIT",
   "type": "module",
   "scripts": {

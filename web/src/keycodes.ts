@@ -1,6 +1,3 @@
-// HID Keyboard/Keypad usage codes (Usage Page 0x07) and modifier bits, with
-// human-friendly labels for the shortcut picker. SET_KEY (§7) takes a modifier
-// bitmask + one of these keycodes; keycode 0 disables the keystroke.
 // SPDX-License-Identifier: MIT
 
 export interface KeycodeOption {
@@ -13,8 +10,6 @@ export interface KeycodeGroup {
   options: KeycodeOption[];
 }
 
-// Modifier bits (standard HID keyboard modifier byte). We expose the left-side
-// modifiers, which cover the vast majority of shortcuts.
 export const MODIFIERS: { bit: number; label: string; short: string }[] = [
   { bit: 1 << 0, label: 'Ctrl', short: 'Ctrl' },
   { bit: 1 << 1, label: 'Shift', short: 'Shift' },
@@ -28,10 +23,10 @@ function range(startCode: number, chars: string): KeycodeOption[] {
 
 export const KEYCODE_GROUPS: KeycodeGroup[] = [
   {
-    group: 'Function (recommended — no OS conflicts)',
+    group: 'Function keys (recommended, nothing else claims them)',
     options: [
-      ...Array.from({ length: 12 }, (_, i) => ({ code: 0x68 + i, label: `F${13 + i}` })), // F13..F24
-      ...Array.from({ length: 12 }, (_, i) => ({ code: 0x3a + i, label: `F${1 + i}` })), // F1..F12
+      ...Array.from({ length: 12 }, (_, i) => ({ code: 0x68 + i, label: `F${13 + i}` })),
+      ...Array.from({ length: 12 }, (_, i) => ({ code: 0x3a + i, label: `F${1 + i}` })),
     ],
   },
   {
@@ -100,13 +95,11 @@ export const KEYCODE_GROUPS: KeycodeGroup[] = [
 const CODE_LABEL = new Map<number, string>();
 for (const g of KEYCODE_GROUPS) for (const o of g.options) CODE_LABEL.set(o.code, o.label);
 
-/** Human-readable label for a keycode (0 = "Disabled"). */
 export function keycodeLabel(code: number): string {
   if (code === 0) return 'Disabled';
   return CODE_LABEL.get(code) ?? `0x${code.toString(16).padStart(2, '0')}`;
 }
 
-/** "Ctrl+Shift+K" style label for a modifier bitmask + keycode. */
 export function shortcutLabel(modifier: number, keycode: number): string {
   const parts: string[] = [];
   for (const m of MODIFIERS) if (modifier & m.bit) parts.push(m.short);

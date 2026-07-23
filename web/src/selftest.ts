@@ -1,7 +1,3 @@
-// Hardware-free self-test for the 32-byte protocol codec.
-// Run with:  npm test   (node --experimental-strip-types src/selftest.ts)
-// Exercises every encoder against the MockPadKit device and asserts the
-// decoders read back exactly what was written. No DOM / WebHID needed.
 // SPDX-License-Identifier: MIT
 
 import {
@@ -29,8 +25,6 @@ import {
 } from './protocol.ts';
 import { MockPadKit } from './mock.ts';
 
-// This file runs under Node (see `npm test`); declare the one Node global we
-// use so tsc typechecks it without pulling in @types/node.
 declare const process: { exit(code: number): never };
 
 let passed = 0;
@@ -51,7 +45,6 @@ function eq(name: string, a: unknown, b: unknown): void {
 
 const dev = new MockPadKit();
 
-// --- Every output report is exactly 32 bytes with the right command byte ----
 const framedChecks: Array<[string, Uint8Array, number]> = [
   ['SET_RGB', encodeSetRgb(Array.from({ length: 6 }, () => ({ r: 1, g: 2, b: 3 }))), Cmd.SET_RGB],
   ['SET_BRIGHTNESS', encodeSetBrightness(128), Cmd.SET_BRIGHTNESS],
@@ -66,7 +59,6 @@ for (const [name, rep, cmd] of framedChecks) {
   eq(`${name} cmd byte`, rep[0], cmd);
 }
 
-// --- SET_RGB layout: 6x RGB starting at byte 1 ------------------------------
 const colors: Rgb[] = [
   { r: 255, g: 0, b: 0 },
   { r: 0, g: 255, b: 0 },
@@ -84,19 +76,15 @@ dev.handleOutput(rgbRep);
 eq('mock stored G1', dev.state.rgb[1]!.g, 255);
 eq('mock stored B5', dev.state.rgb[5]!.b, 90);
 
-// --- SET_IDLE_DIM little-endian ms/100 encoding -----------------------------
-const idleRep = encodeSetIdleDim(true, 30000); // 30000/100 = 300 = 0x012C
+const idleRep = encodeSetIdleDim(true, 30000);
 eq('idle enable', idleRep[1], 1);
 eq('idle lo', idleRep[2], 0x2c);
 eq('idle hi', idleRep[3], 0x01);
 
-// --- Round-trip config through the mock -------------------------------------
 dev.handleOutput(encodeSetBrightness(123));
 dev.handleOutput(encodeSetEffect(Effect.RAINBOW));
 dev.handleOutput(encodeSetFlags(Flag.IDLE_DIM_ON));
-// Slot 3 (key 4) -> Alt+Left. Note: CONFIG_DUMP's keymap summary is truncated
-// to the entries that fit from byte 22 (slots 0..4), so we assert on an
-// in-range slot; higher slots are read via SET_KEY echoes, not the dump.
+
 dev.handleOutput(encodeSetKey(3, { modifier: 0x04, keycode: 0x50 }));
 function cmdReport(cmd: number): Uint8Array {
   const b = new Uint8Array(REPORT_SIZE);
@@ -115,7 +103,6 @@ if (dump) {
   eq('cfg keymap slot3 code', cfg.keymap[3]!.keycode, 0x50);
 }
 
-// --- FW_INFO decode + capability gating -------------------------------------
 const infoDump = dev.handleOutput(cmdReport(Cmd.GET_INFO));
 check('GET_INFO returned a report', infoDump !== null);
 if (infoDump) {
@@ -129,7 +116,6 @@ if (infoDump) {
   check('cap: idle dim', hasCapability(info.capabilities, Capability.IDLE_DIM));
 }
 
-// --- SAVE -> ACK ------------------------------------------------------------
 const ackRep = dev.handleOutput(encodeSave());
 check('SAVE returned ACK', ackRep !== null);
 if (ackRep) {
@@ -140,20 +126,17 @@ if (ackRep) {
   check('mock marked saved', dev.state.saved);
 }
 
-// --- Unknown command -> error ACK -------------------------------------------
 const unknown = new Uint8Array(REPORT_SIZE);
 unknown[0] = 0x7f;
 const errAck = dev.handleOutput(unknown);
 check('unknown cmd returns ACK', errAck !== null);
 if (errAck) eq('unknown cmd err status', decodeAck(errAck).status, 1);
 
-// --- INPUT_EVENT decode -----------------------------------------------------
 const evtRep = dev.inputEvent(2, Action.KEY_DOWN, 0);
 const evt = decodeInputEvent(evtRep);
 eq('input control', evt.control, 2);
 eq('input action', evt.action, Action.KEY_DOWN);
 
-// --- Byte clamping ----------------------------------------------------------
 const clamped = encodeSetBrightness(999);
 eq('brightness clamped to 255', clamped[1], 255);
 

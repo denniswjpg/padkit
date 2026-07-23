@@ -1,8 +1,4 @@
-// Integration test for the flash state machine (runFlash in src/flash.ts),
-// driven against an in-memory mock of the CH552 WCH ISP ROM bootloader. No
-// hardware, no browser: it exercises the exact command ORDERING and the
-// encrypt-once/reuse-for-verify behaviour that the pure isp.selftest cannot.
-// Run via `npm test`. SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
 import {
   Cmd,
@@ -12,7 +8,7 @@ import {
   toHex,
   xorInPlace,
 } from './isp.ts';
-import { isBootloaderDevice, pickBootloader, runFlash, type Progress } from './flash.ts';
+import { isBootloaderDevice, pickBootloader, runFlash, type Progress } from './flash-core.ts';
 
 declare const process: { exit(code: number): never };
 
@@ -29,7 +25,6 @@ function eq(name: string, a: unknown, b: unknown): void {
   check(`${name} (expected ${JSON.stringify(b)}, got ${JSON.stringify(a)})`, a === b);
 }
 
-// --- Mock CH552 bootloader (v2.5.0, type 0x52, family 0x11, id 11-22-33-44) --
 const CHIP_TYPE = 0x52;
 const CHIP_FAMILY = 0x11;
 const MCU_ID = Uint8Array.from([0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77]);
@@ -46,7 +41,7 @@ class MockBootloader {
   cmpMismatch = false;
   sawReboot = false;
   rebootReadAttempts = 0;
-  log: number[] = []; // command bytes seen, in order
+  log: number[] = [];
   private pending: Uint8Array | null = null;
 
   private readonly mockConfig: USBConfiguration = {
@@ -92,7 +87,7 @@ class MockBootloader {
 
   async transferIn(_ep: number, _length: number): Promise<USBInTransferResult> {
     if (this.sawReboot) {
-      // v2.50 ROM never ACKs reboot — simulate the endpoint going away.
+
       this.rebootReadAttempts++;
       throw new Error('device disconnected');
     }
@@ -113,7 +108,7 @@ class MockBootloader {
         return this.resp(cmd, [CHIP_TYPE, CHIP_FAMILY]);
       case Cmd.READ_CONFIG: {
         const config = [0xff, 0xff, 0xff, 0xff, 0x23, 0x00, 0x00, 0x00, 0x47, 0x52, 0x00, 0x50];
-        const bvBE = [0x00, 0x02, 0x05, 0x00]; // 2.5.0
+        const bvBE = [0x00, 0x02, 0x05, 0x00];
         const checksum = 0x00;
         return this.resp(cmd, [0x1f, 0x00, ...config, ...bvBE, ...Array.from(MCU_ID), checksum]);
       }
@@ -126,7 +121,7 @@ class MockBootloader {
         return this.resp(cmd, [0x00, 0x00]);
       case Cmd.WRITE_CODE_FLASH: {
         const offset = req[3]! | (req[4]! << 8) | (req[5]! << 16) | (req[6]! << 24);
-        const chunk = req.subarray(8); // skip 3 hdr + 4 offset + 1 _u1
+        const chunk = req.subarray(8);
         this.flash.set(chunk, offset);
         return this.resp(cmd, [0x00, 0x00]);
       }
@@ -147,7 +142,6 @@ class MockBootloader {
   }
 }
 
-// --- Drive a real flash against the mock ------------------------------------
 const firmware = new Uint8Array(6815);
 for (let i = 0; i < firmware.length; i++) firmware[i] = (i * 91 + 13) & 0xff;
 
@@ -156,14 +150,11 @@ const phases: Progress[] = [];
 
 const result = await runFlash(dev as unknown as USBDevice, firmware, (p) => phases.push(p));
 
-// Returned identity.
 eq('chipName', result.chipName, 'CH552');
 eq('bootloader', result.bootloader, '2.5.0');
 eq('chipId', result.chipId, '11-22-33-44');
 eq('chunks', result.chunks, 122);
 
-// Command ordering: send_key -> write_config -> erase -> writes -> send_key ->
-// cmp -> reboot (isp55e0.c main()).
 const firstOf = (c: number) => dev.log.indexOf(c);
 check('SET_KEY before ERASE', firstOf(Cmd.SET_KEY) < firstOf(Cmd.ERASE_CODE_FLASH));
 check('WRITE_CONFIG after first SET_KEY', firstOf(Cmd.WRITE_CONFIG) > firstOf(Cmd.SET_KEY));
@@ -175,28 +166,23 @@ eq('122 write commands', dev.log.filter((c) => c === Cmd.WRITE_CODE_FLASH).lengt
 eq('122 compare commands', dev.log.filter((c) => c === Cmd.CMP_CODE_FLASH).length, 122);
 eq('exactly one reboot', dev.log.filter((c) => c === Cmd.REBOOT).length, 1);
 
-// The bytes that landed in flash, decrypted, must equal the padded image.
 const padded = padFirmware(firmware);
 const decrypted = xorInPlace(dev.flash.subarray(0, padded.length).slice(), KEY);
 check('flashed image (decrypted) matches padded firmware', decrypted.every((b, i) => b === padded[i]));
 check('no compare mismatch', !dev.cmpMismatch);
 
-// Reboot no-ACK was tolerated (2.5.0 waitRebootResp -> one swallowed read).
 check('reboot ack read was attempted and swallowed', dev.rebootReadAttempts >= 1);
 
-// Progress surfaced the key phases.
 check('progress reached writing total', phases.some((p) => p.phase === 'writing' && p.done === 122));
 check('progress reached verifying total', phases.some((p) => p.phase === 'verifying' && p.done === 122));
 check('progress ended done', phases.some((p) => p.phase === 'done'));
 
-// Firmware fingerprint sanity (matches the shipped bin's known sha prefix idea).
 check('key derivation stable', toHex(KEY) === toHex(deriveXorKey(MCU_ID, 4, CHIP_TYPE)));
 
-// --- Device matching for getDevices() auto-detect + waiting mode ------------
 {
   const boot4348 = { vendorId: 0x4348, productId: 0x55e0 };
   const boot1a86 = { vendorId: 0x1a86, productId: 0x55e0 };
-  const appHid = { vendorId: 0x1189, productId: 0x8890 }; // PadKit app (not bootloader)
+  const appHid = { vendorId: 0x1189, productId: 0x8890 };
   const other = { vendorId: 0x1234, productId: 0x5678 };
 
   check('isBootloaderDevice 4348:55e0', isBootloaderDevice(boot4348));
@@ -205,8 +191,6 @@ check('key derivation stable', toHex(KEY) === toHex(deriveXorKey(MCU_ID, 4, CHIP
   check('isBootloaderDevice rejects same PID wrong VID', !isBootloaderDevice({ vendorId: 0x9999, productId: 0x55e0 }));
   check('isBootloaderDevice rejects unrelated', !isBootloaderDevice(other));
 
-  // pickBootloader skips non-bootloader entries (e.g. the app HID) that
-  // getDevices() might return, and returns the first bootloader found.
   eq('pickBootloader none present', pickBootloader([appHid, other]), undefined);
   eq('pickBootloader empty list', pickBootloader([]), undefined);
   check('pickBootloader finds the bootloader among others', pickBootloader([appHid, boot4348, other]) === boot4348);

@@ -1,9 +1,12 @@
-# PadKit Config (web)
+# PadKit (web)
 
-Zero-install browser config tool for the PadKit CH552 macropad. It connects to the pad over
-**WebHID**, lets you live-edit key colors, brightness, lighting effects and the per-key keymap,
-then **saves to the device's own flash**. There is no backend and nothing leaves your machine —
-it is a static single-page app served from GitHub Pages.
+The PadKit site on GitHub Pages. Three static pages, no backend, nothing leaves your machine:
+
+- `index.html`, a landing page that explains the project, with an interactive pad you can drive
+  from the real F13 to F18 keys.
+- `flash.html`, a guided WebUSB firmware flasher for the CH552 ROM bootloader.
+- `config.html`, a WebHID config tool that live-edits key colors, brightness, lighting effects
+  and the per-key keymap, then **saves to the device's own flash**.
 
 It speaks the host side of the frozen [`docs/protocol-v2.md`](../docs/protocol-v2.md) vendor-HID
 protocol: 32-byte reports on the vendor collection (Usage Page `0xFF60`, Usage `0x61`), never the
@@ -52,9 +55,15 @@ SAVE→ACK, unknown-command error ACK, byte clamping).
 | `src/protocol.ts` | Pure, DOM-free codec for the 32-byte reports (the auditable core). |
 | `src/padkit-hid.ts` | WebHID transport: device request, `0xFF60` collection selection, typed events, ACK waiting. |
 | `src/keycodes.ts` | HID keyboard usage codes + modifier bits with friendly labels for the shortcut picker. |
-| `src/main.ts` | UI: connect, key grid + editor, lighting, live monitor, save/reset. |
+| `src/main.ts` | Config tool: connect, key grid + editor, lighting, live monitor, save/reset. |
 | `src/mock.ts` / `src/selftest.ts` | Hardware-free device model + codec self-test. |
-| `flash.html` / `src/flash.ts` | Firmware-flasher **stub** (WebUSB seam; see [`docs/flashing.md`](../docs/flashing.md)). |
+| `index.html` / `landing.ts` | Landing page and the interactive pad hero. |
+| `flash.html` / `flash-entry.ts` | Guided flasher page; mounts the wizard. |
+| `src/flash-core.ts` | WebUSB transport + flash state machine (`runFlash`), ported from `../flasher/isp55e0.c`. |
+| `src/isp.ts` | Pure WCH-ISP codec for the CH55x ROM bootloader. |
+| `src/flash-wizard.ts` / `src/meters.ts` | Guided three-step flashing UI + progress visuals. |
+| `src/pad-figure.ts` | The macropad drawn in CSS (hero and flash progress display). |
+| `theme.css` / `src/dark-shell.css` / `src/base.css` / `src/motion.css` | Styling and motion. |
 
 ### How the vendor collection is selected
 
@@ -64,12 +73,13 @@ whose `collections` include `usagePage === 0xFF60` — **not** "the first HID pa
 keyboard collection and would fail on Windows (protocol §1/§9). Output reports are sent with
 report id `0` (the vendor interface has no report IDs).
 
-### What's stubbed
+### Firmware flashing
 
-The **firmware flasher** (`flash.html`) is a placeholder. Browser flashing over WebUSB is a
-planned follow-up; the page detects WebUSB and points to the CLI flow in `docs/flashing.md`.
-`src/flash.ts` documents the ch55xduino-style WCH-ISP-over-WebUSB approach the real
-implementation will follow.
+The **firmware flasher** (`flash.html`) drives the CH552 ROM bootloader over WebUSB, erasing,
+writing and verifying the embedded `firmware/padkit.bin`. `src/flash-core.ts` owns the transport
+and state machine; `src/flash-wizard.ts` owns the guided UI. Add `?preview=1` to walk the whole
+flow against a simulated pad with no hardware. Implementation notes and the mapping to the
+reference C flasher are in [`FLASHER_NOTES.md`](FLASHER_NOTES.md).
 
 ## License
 

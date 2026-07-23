@@ -1,7 +1,3 @@
-// Minimal ambient declarations for the subset of WebUSB this app uses.
-// WebUSB is a WICG spec not present in TypeScript's default lib.dom, so we
-// declare only what flash.ts touches — mirroring webhid.d.ts. Kept small on
-// purpose (auditable, zero external @types dependency).
 // SPDX-License-Identifier: MIT
 
 type USBDirection = 'in' | 'out';
