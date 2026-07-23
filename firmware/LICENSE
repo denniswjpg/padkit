@@ -1,0 +1,43 @@
+PadKit firmware — License
+=========================
+
+The PadKit firmware directory is licensed under the
+
+    Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
+
+license. The full, binding legal text is available at:
+
+    https://creativecommons.org/licenses/by-sa/3.0/legalcode
+
+A human-readable summary (not a substitute for the license) is at:
+
+    https://creativecommons.org/licenses/by-sa/3.0/
+
+Why CC BY-SA
+------------
+This directory bundles and builds on the CH552 USB / NeoPixel software stack by
+Stefan "wagiminator" Wagner (https://github.com/wagiminator), which is published
+under CC BY-SA. Because the PadKit firmware is a derivative and combined work of
+that stack, the whole firmware directory is distributed under the same license.
+
+What this means for you
+-----------------------
+  * Attribution — You must give appropriate credit to the original author(s),
+    including Stefan Wagner for the CH552 stack (see ATTRIBUTION.md), and to the
+    PadKit project, provide a link to the license, and indicate if changes were
+    made. The two local modifications to the vendored stack are marked in-source
+    with "PadKit local patch vs wagiminator upstream" comment blocks.
+  * ShareAlike — If you remix, transform, or build upon this material, you must
+    distribute your contributions under the same CC BY-SA 3.0 license.
+  * No additional restrictions — You may not apply legal terms or technological
+    measures that legally restrict others from doing anything the license permits.
+
+Copyright
+---------
+  * include/ CH552 USB & NeoPixel stack: Copyright (c) Stefan Wagner
+    (github.com/wagiminator), CC BY-SA. Two files carry PadKit patches — see
+    ATTRIBUTION.md.
+  * padkit.c and PadKit-specific documentation: Copyright (c) the PadKit
+    contributors, CC BY-SA 3.0.
+
+See ATTRIBUTION.md for the exact list of files derived from upstream.

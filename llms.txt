@@ -1,0 +1,54 @@
+# PadKit
+
+> Open-source firmware + tooling for a 6-key + rotary-knob USB macropad built on a
+> WCH CH552G microcontroller with 6 addressable RGB LEDs. The pad enumerates as a
+> plain USB keyboard that types F13–F23, so any key/gesture can be bound in any OS
+> or app with no driver and no software. RGB lighting is driven from the host over
+> the same HID interface. v0.1 ships firmware, a CLI flasher, and the spec; a
+> browser config tool and a companion daemon are on the roadmap.
+
+Key facts an AI agent needs to wire PadKit into a user's setup:
+
+- Inputs are standard function keys on the HID Keyboard/Keypad page (0x07):
+  Key1–6 = F13–F18 (real key-down/up; host can tell tap from hold),
+  knob turn CW/CCW = F21/F19, knob click = F20, push-turn CW/CCW = F23/F22.
+  Knob gestures are momentary taps; a push-turn suppresses the click.
+- HID usage IDs: F13=0x68, F14=0x69, F15=0x6A, F16=0x6B, F17=0x6C, F18=0x6D,
+  F19=0x6E, F20=0x6F, F21=0x70, F22=0x71, F23=0x72.
+- LEDs are set via HID OUTPUT reports (report ID = first byte): id 1 = status
+  scene from Num/Caps/Scroll bits; id 3 = static frame [0x03 + 6×RGB]; id 4 =
+  effect frame [0x04, effect, 6×RGB]; id 5 = brightness [0x05, 1–255].
+- Running device USB VID:PID = 1189:8890. ISP bootloader = 4348:55e0.
+- The CH552 bootloader is in mask ROM: flashing cannot brick the chip.
+
+## Spec
+
+- [AGENTS.md](AGENTS.md): The load-bearing spec — usage tiers, complete input map,
+  binding examples (macOS/Karabiner, Windows/AutoHotkey, Linux/keyd, Home
+  Assistant), the LED report protocol, a "for AI agents" section with worked
+  micro-examples, and the v0.2 roadmap.
+
+## Docs
+
+- [docs/flashing.md](docs/flashing.md): Enter the bootloader, run the flasher,
+  Linux udev rule, Windows Zadig/WinUSB note, and mask-ROM recovery.
+- [docs/hardware.md](docs/hardware.md): Supported device class, CH552G pin map,
+  clone-wiring variance, and the pin-scanner firmware for mapping an unknown board.
+- [docs/protocol.md](docs/protocol.md): Deep HID report layout (LED OUTPUT reports
+  and their bytes) plus the input-report semantics.
+
+## Source
+
+- [firmware/](firmware/): v0.1 CH552G firmware (`padkit.c`, prebuilt `padkit.bin`),
+  the bundled USB/NeoPixel stack, and the `scanner/` wiring-discovery build.
+- [flasher/](flasher/): Patched `isp55e0` CLI flasher (GPLv3) and the udev rule.
+
+## Roadmap (not shipped)
+
+- Browser config tool: a bidirectional QMK-style vendor collection (Usage Page
+  0xFF60 / Usage 0x61, 32-byte reports, no report IDs) enabling a zero-install
+  WebHID config page cross-platform.
+- Browser flasher: WebUSB flashing (install-free on macOS/Linux; Windows needs a
+  one-time Zadig→WinUSB step because the ROM bootloader has no WCID descriptors).
+- Companion daemon (`daemon/`): optional host service mapping events to actions.
+</content>

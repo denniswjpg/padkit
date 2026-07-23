@@ -1,0 +1,22 @@
+{
+  "name": "padkit-web",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Zero-install WebHID config tool for the PadKit CH552 macropad — live-edit LEDs, brightness and keymap, then save to the pad's flash. No backend.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "copy-firmware": "node scripts/copy-firmware.mjs",
+    "predev": "node scripts/copy-firmware.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/copy-firmware.mjs",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings src/selftest.ts && node --experimental-strip-types --no-warnings src/isp.selftest.ts && node --experimental-strip-types --no-warnings src/flash.selftest.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}

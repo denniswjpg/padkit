@@ -1,0 +1,33 @@
+name: firmware
+
+on:
+  push:
+    paths: ['firmware/**', '.github/workflows/firmware.yml']
+  pull_request:
+    paths: ['firmware/**', '.github/workflows/firmware.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SDCC
+        run: sudo apt-get update && sudo apt-get install -y sdcc make
+      - name: Build firmware
+        run: |
+          cd firmware
+          make bin
+          ls -l padkit.bin
+      - name: Build scanner firmware
+        run: |
+          cd firmware/scanner
+          make bin
+          ls -l scanner.bin
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: padkit-firmware
+          path: |
+            firmware/padkit.bin
+            firmware/scanner/scanner.bin

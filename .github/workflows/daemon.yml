@@ -1,0 +1,39 @@
+name: daemon
+
+on:
+  push:
+    paths: ['daemon/**', '.github/workflows/daemon.yml']
+  pull_request:
+    paths: ['daemon/**', '.github/workflows/daemon.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: daemon
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      # karalabe/hid is cgo and vendors hidapi+libusb; the runners' native
+      # C toolchain is sufficient. No extra system HID/udev libs required.
+      - name: Build
+        run: go build ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test ./...
+      - name: Release binary
+        run: go build -trimpath -ldflags="-s -w" -o dist/ ./cmd/padkitd
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: padkitd-${{ matrix.os }}
+          path: daemon/dist/*

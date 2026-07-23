@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PadKit companion daemon — macOS launchd LaunchAgent
+  SPDX-License-Identifier: MIT
+
+  Install (per-user):
+    cp com.padkit.padkitd.plist ~/Library/LaunchAgents/
+    # edit the ProgramArguments path below to your padkitd binary
+    launchctl load ~/Library/LaunchAgents/com.padkit.padkitd.plist
+    launchctl start com.padkit.padkitd
+    # logs: ~/Library/Logs/padkitd.out.log / .err.log
+
+  Notes:
+    - macOS needs no driver or udev rule for a vendor-HID collection.
+    - If you use keystroke actions, grant the daemon (or your terminal) the
+      Accessibility permission in System Settings > Privacy & Security.
+    - To stop: launchctl unload ~/Library/LaunchAgents/com.padkit.padkitd.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.padkit.padkitd</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/padkitd</string>
+        <string>serve</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/USERNAME/Library/Logs/padkitd.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/USERNAME/Library/Logs/padkitd.err.log</string>
+</dict>
+</plist>

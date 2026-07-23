@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PadKit daemon</title>
+<style>
+  :root { color-scheme: light dark; --bg:#0f1115; --panel:#171a21; --fg:#e6e9ef; --muted:#8b93a7; --accent:#5b8cff; --line:#252a35; }
+  @media (prefers-color-scheme: light){ :root{ --bg:#f5f6f8; --panel:#fff; --fg:#1a1d24; --muted:#5b6472; --line:#e2e5ea; } }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font:15px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--fg); }
+  header{ padding:18px 22px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  header h1{ font-size:17px; margin:0; font-weight:650; }
+  .dot{ width:9px; height:9px; border-radius:50%; background:#3ecf8e; box-shadow:0 0 0 3px color-mix(in srgb,#3ecf8e 25%,transparent); }
+  .dot.off{ background:#e5484d; box-shadow:0 0 0 3px color-mix(in srgb,#e5484d 25%,transparent); }
+  main{ max-width:960px; margin:0 auto; padding:22px; display:grid; gap:22px; }
+  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .panel h2{ font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 12px; }
+  textarea{ width:100%; min-height:340px; resize:vertical; font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:12px; }
+  button{ font:inherit; font-weight:600; border:1px solid var(--line); background:var(--accent); color:#fff; border-radius:8px; padding:8px 14px; cursor:pointer; }
+  button.ghost{ background:transparent; color:var(--fg); }
+  button:active{ transform:translateY(1px); }
+  .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  .keys{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:360px; }
+  .key{ aspect-ratio:1/.7; border-radius:10px; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-weight:600; cursor:pointer; background:var(--bg); }
+  .msg{ font-size:13px; color:var(--muted); min-height:18px; }
+  .msg.err{ color:#e5484d; }
+  .msg.ok{ color:#3ecf8e; }
+  input[type=color]{ width:44px; height:34px; padding:0; border:1px solid var(--line); border-radius:8px; background:none; }
+  input[type=range]{ flex:1; }
+  code{ font:12px ui-monospace,monospace; color:var(--muted); }
+  .events{ font:12px/1.6 ui-monospace,monospace; max-height:160px; overflow:auto; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px; }
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="statusDot"></span>
+  <h1>PadKit daemon</h1>
+  <code id="devInfo">connecting…</code>
+</header>
+<main>
+  <section class="panel">
+    <h2>LEDs</h2>
+    <div class="keys" id="keys"></div>
+    <div class="row">
+      <label>Key color <input type="color" id="keyColor" value="#5b8cff"></label>
+      <button class="ghost" id="flashBtn">Flash selected</button>
+      <button class="ghost" id="identifyBtn">Identify selected</button>
+    </div>
+    <div class="row">
+      <label>Brightness</label>
+      <input type="range" id="bright" min="0" max="255" value="200">
+      <span id="brightVal">200</span>
+    </div>
+    <div class="row">
+      <label>Effect
+        <select id="effect">
+          <option value="static">static</option>
+          <option value="breathe">breathe</option>
+          <option value="rainbow">rainbow</option>
+          <option value="reactive">reactive</option>
+          <option value="scanner">scanner</option>
+        </select>
+      </label>
+      <input type="color" id="effectColor" value="#5b8cff">
+      <button class="ghost" id="effectBtn">Apply effect</button>
+      <button class="ghost" id="saveBtn">Save to device</button>
+    </div>
+    <div class="msg" id="ledMsg"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Action map (config.yaml)</h2>
+    <textarea id="cfg" spellcheck="false"></textarea>
+    <div class="row">
+      <button id="saveCfg">Save &amp; reload</button>
+      <button class="ghost" id="reloadCfg">Revert</button>
+      <span class="msg" id="cfgMsg"></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Live gestures</h2>
+    <div class="events" id="events">waiting for pad input…</div>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let selected = 0;
+const api = (m,u,b) => fetch(u,{method:m,headers:b?{'Content-Type':'application/json'}:{},body:b?JSON.stringify(b):undefined});
+function flash(el,msg,cls){ el.textContent=msg; el.className='msg '+(cls||''); setTimeout(()=>{el.textContent='';el.className='msg';},2500); }
+function hex(c){ return c; }
+
+// key grid
+const kg = $('#keys');
+for(let i=0;i<6;i++){ const d=document.createElement('div'); d.className='key'; d.textContent='key'+(i+1); d.dataset.slot=i;
+  d.onclick=()=>{ selected=i; [...kg.children].forEach(c=>c.style.outline=''); d.style.outline='2px solid var(--accent)';
+    api('POST','/api/led/key',{slot:i,color:$('#keyColor').value}).then(()=>flash($('#ledMsg'),'set key'+(i+1),'ok')); };
+  kg.appendChild(d);
+}
+kg.children[0].style.outline='2px solid var(--accent)';
+
+$('#flashBtn').onclick=()=>api('POST','/api/led/flash',{slot:selected,color:$('#keyColor').value,ms:300}).then(()=>flash($('#ledMsg'),'flashed','ok'));
+$('#identifyBtn').onclick=()=>api('POST','/api/led/identify',{slot:selected}).then(()=>flash($('#ledMsg'),'identify','ok'));
+$('#bright').oninput=e=>{ $('#brightVal').textContent=e.target.value; };
+$('#bright').onchange=e=>api('POST','/api/led/brightness',{value:+e.target.value}).then(()=>flash($('#ledMsg'),'brightness '+e.target.value,'ok'));
+$('#effectBtn').onclick=()=>api('POST','/api/led/effect',{effect:$('#effect').value,rgb:$('#effectColor').value}).then(()=>flash($('#ledMsg'),'effect '+$('#effect').value,'ok'));
+$('#saveBtn').onclick=()=>api('POST','/api/led/save').then(()=>flash($('#ledMsg'),'saved to device','ok'));
+
+// config editor
+function loadCfg(){ fetch('/api/config').then(r=>r.text()).then(t=>{ $('#cfg').value=t; }); }
+$('#saveCfg').onclick=()=>{ fetch('/api/config',{method:'PUT',headers:{'Content-Type':'text/plain'},body:$('#cfg').value})
+  .then(async r=>{ if(r.ok) flash($('#cfgMsg'),'saved & reloaded','ok'); else flash($('#cfgMsg'),await r.text(),'err'); }); };
+$('#reloadCfg').onclick=loadCfg;
+loadCfg();
+
+// device info + status
+function poll(){ fetch('/api/info').then(r=>r.json()).then(d=>{
+  $('#statusDot').className='dot'+(d.connected?'':' off');
+  $('#devInfo').textContent=d.connected?('vid '+d.vid+' pid '+d.pid+' · usagePage '+d.usage_page):'no device (mock or unplugged)';
+}).catch(()=>{ $('#statusDot').className='dot off'; }); }
+poll(); setInterval(poll,4000);
+
+// live events via SSE
+const ev=$('#events'); let lines=[];
+const es=new EventSource('/api/events/stream');
+es.onmessage=e=>{ const g=JSON.parse(e.data); lines.unshift(new Date(g.at).toLocaleTimeString()+'  '+g.control+'  '+g.kind); lines=lines.slice(0,50); ev.textContent=lines.join('\n'); };
+es.onerror=()=>{};
+</script>
+</body>
+</html>

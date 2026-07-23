@@ -1,0 +1,16 @@
+# build artifacts
+*.o
+*.rel
+*.lst
+*.map
+*.mem
+*.asm
+*.ihx
+*.lk
+node_modules/
+dist/
+web/dist/
+daemon/padkit
+daemon/*.exe
+__pycache__/
+.DS_Store

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="PadKit browser firmware flasher (WebUSB). Flash the CH552 over its ROM bootloader from Chrome or Edge — no install on macOS or Linux."
+    />
+    <title>PadKit Firmware Flasher</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <span class="cap"></span><span class="cap"></span><span class="cap"></span>
+          <span class="cap"></span><span class="cap"></span><span class="cap"></span>
+        </span>
+        <span class="brand-text"><strong>PadKit</strong><small>Flasher</small></span>
+      </div>
+      <div class="topbar-actions">
+        <a class="btn btn-ghost" href="./index.html">← Back to config</a>
+        <a class="btn btn-ghost" href="https://github.com/denniswjpg/padkit" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="card" style="margin-bottom: 1.25rem">
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 1.5rem; align-items: center">
+          <img src="./img/PadKit_device.webp" alt="The PadKit macropad — 6 keys and a rotary knob"
+               style="width: 100%; height: auto; border-radius: 12px" />
+          <div>
+            <h1 style="font-size: 1.5rem; margin: 0 0 0.5rem">What is this?</h1>
+            <p style="margin: 0 0 0.75rem; color: var(--fg-muted)">
+              <b>PadKit</b> is open firmware for the cheap 6-key + rotary-knob CH552 macropad. Flash
+              it once and every key and the knob can send any shortcut, run a command, hit a
+              webhook, or talk to an AI agent.
+            </p>
+            <p style="margin: 0 0 0.75rem; color: var(--fg-muted)">
+              Mute &amp; volume for calls · media + scrub · run tests / git on keys · Home Assistant
+              scenes · approve &amp; scroll an AI coding agent — you decide.
+            </p>
+            <p style="margin: 0; font-size: 0.9rem">
+              <a href="./index.html">Configure colors &amp; keys →</a> &nbsp;·&nbsp;
+              <a href="https://github.com/denniswjpg/padkit#make-it-yours">Build your own (spec + a ready prompt) →</a>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2 style="font-size: 1.6rem; margin: 0">Flash in your browser</h2>
+          <p class="card-sub">
+            Chrome/Edge, nothing to install on macOS/Linux. The chip is <b>unbrickable</b> — a
+            failed flash is always recoverable. First put the pad into bootloader mode:
+          </p>
+        </div>
+
+        <ol style="line-height: 1.8; padding-left: 1.2rem; color: var(--fg-muted); margin: 0 0 0.5rem">
+          <li>Remove the four faceplate screws, lift out the PCB.</li>
+          <li>Bridge the <b>SW2</b> pads (back, next to the <code>U7</code> chip) with tweezers
+              and hold while you plug in USB-C, then release.</li>
+          <li>Hit <b>Connect&nbsp;&amp;&nbsp;flash</b> below and pick the device — do it promptly,
+              the bootloader window is only a few seconds.</li>
+        </ol>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0 0">
+          <figure style="margin: 0">
+            <img src="./img/PadKit_screws.webp" alt="The four corner screws to remove"
+                 loading="lazy" style="width: 100%; height: auto; border-radius: 10px" />
+            <figcaption style="font-size: 0.82rem; color: var(--fg-muted); margin-top: 0.4rem">1 · Remove the four corner screws.</figcaption>
+          </figure>
+          <figure style="margin: 0">
+            <img src="./img/PadKit_device_opened.webp" alt="PCB removed, back side exposed"
+                 loading="lazy" style="width: 100%; height: auto; border-radius: 10px" />
+            <figcaption style="font-size: 0.82rem; color: var(--fg-muted); margin-top: 0.4rem">2 · Lift out the PCB (SW2 sits by the U7 chip).</figcaption>
+          </figure>
+          <figure style="margin: 0">
+            <img src="./img/PadKit_short_pincett.webp" alt="Bridge SW2 with tweezers, then connect USB"
+                 loading="lazy" style="width: 100%; height: auto; border-radius: 10px" />
+            <figcaption style="font-size: 0.82rem; color: var(--fg-muted); margin-top: 0.4rem">3 · Bridge SW2 (①), then connect USB (②).</figcaption>
+          </figure>
+        </div>
+
+        <!-- The WebUSB flasher UI mounts here (src/flash.ts). -->
+        <div id="flasher-root" style="margin-top: 1.75rem"></div>
+
+        <div id="webusb-probe" class="gated-note" style="margin-top: 1.25rem"></div>
+
+        <p style="margin-top: 1.5rem; color: var(--fg-muted); font-size: 0.9rem">
+          CLI alternative: <code>./flasher/isp55e0 -f firmware/padkit.bin</code>. Windows needs a
+          one-time Zadig&nbsp;→&nbsp;WinUSB step. Details: <code>docs/flashing.md</code>.
+        </p>
+      </section>
+    </main>
+
+    <script type="module" src="./src/flash.ts"></script>
+  </body>
+</html>

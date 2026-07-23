@@ -1,0 +1,50 @@
+# PadKit daemon config — agent status LEDs (MCP)
+# SPDX-License-Identifier: MIT
+#
+# This config is intentionally light on bindings: the point of the "agent status
+# LEDs" setup is that a coding agent drives the LEDs over MCP, and you use the
+# keys to signal the agent back.
+#
+# 1. Run the daemon:            padkitd serve --config agent-status-leds.yaml
+# 2. Register the MCP server with your agent (see docs/integrations/mcp-coding-agents.md).
+#    The MCP server bridges to this running daemon, so the daemon keeps sole
+#    ownership of the USB device.
+#
+# Suggested LED convention an agent can adopt via MCP tools:
+#   key1 (slot 0) green  = build passing        set_key_color slot=0 color=#00ff00
+#   key1        red    = build failing        set_key_color slot=0 color=#ff0000
+#   key2 (slot 1) blue   = tests running        set_effect breathe rgb=#0044ff
+#   key6 (slot 5) yellow = waiting for you       flash_key   slot=5 color=#ffcc00
+# The agent can also poll get_last_event to react when you tap a key.
+
+device:
+  vid: 0x1189
+  pid: 0x8890
+  usage_page: 0xFF60
+  suppress_keyboard: false   # keep F13–F23 working too; the agent only drives LEDs
+
+server:
+  http_addr: "127.0.0.1:8787"
+  web_ui: true
+
+gestures:
+  hold_ms: 400
+
+bindings:
+  # Tap key6 to acknowledge an agent prompt: clears its "waiting" flash to green
+  # via the local LED endpoint (the agent can watch get_last_event instead).
+  key6:
+    tap: { type: led, led: { slot: 5, color: "#00ff00" } }
+
+  # Tap key1 to "approve" — fire a webhook your agent's tooling can watch, or run
+  # a local script that writes a decision file.
+  key1:
+    tap: { type: shell, command: "echo approved >> /tmp/padkit-agent-decisions.log" }
+
+  # Knob dims the whole strip so the status lights aren't distracting at night.
+  knob_cw:
+    type: led
+    led: { brightness: 220 }
+  knob_ccw:
+    type: led
+    led: { brightness: 25 }

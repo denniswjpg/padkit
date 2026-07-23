@@ -1,0 +1,8 @@
+# Built daemon binaries (do not commit)
+/padkitd
+/padkitd.exe
+padkit
+*.exe
+
+# local config the daemon may write during dev
+/config.local.yaml

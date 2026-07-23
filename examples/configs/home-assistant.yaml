@@ -1,0 +1,83 @@
+# PadKit daemon config — Home Assistant via webhooks
+# SPDX-License-Identifier: MIT
+#
+# Every key fires a Home Assistant webhook. Create matching automations in HA
+# with an "Webhook" trigger (Settings > Automations > Trigger: Webhook), using
+# the webhook IDs below (padkit_key1 ...). The knob adjusts a light's brightness
+# through the HA REST API, and knob-click toggles a light.
+#
+# Replace homeassistant.local:8123 with your HA host, and put a long-lived
+# access token in the Authorization headers where the REST API is used.
+# (Webhook triggers need no auth; REST service calls do.)
+
+device:
+  vid: 0x1189
+  pid: 0x8890
+  usage_page: 0xFF60
+  suppress_keyboard: true      # let the pad be a dedicated HA controller
+
+server:
+  http_addr: "127.0.0.1:8787"
+  web_ui: true
+
+gestures:
+  hold_ms: 400
+
+bindings:
+  key1:
+    tap:  { type: webhook, method: POST, url: "http://homeassistant.local:8123/api/webhook/padkit_key1" }
+    hold: { type: webhook, method: POST, url: "http://homeassistant.local:8123/api/webhook/padkit_key1_hold" }
+  key2:
+    tap:  { type: webhook, method: POST, url: "http://homeassistant.local:8123/api/webhook/padkit_key2" }
+  key3:
+    tap:  { type: webhook, method: POST, url: "http://homeassistant.local:8123/api/webhook/padkit_key3" }
+
+  # Directly call an HA service (turn a scene on) with a bearer token:
+  key4:
+    tap:
+      type: webhook
+      method: POST
+      url: "http://homeassistant.local:8123/api/services/scene/turn_on"
+      headers:
+        Authorization: "Bearer YOUR_LONG_LIVED_TOKEN"
+        Content-Type: "application/json"
+      body: '{"entity_id":"scene.movie_time"}'
+
+  # Knob = light brightness via the REST API (light.living_room).
+  knob_cw:
+    type: webhook
+    method: POST
+    url: "http://homeassistant.local:8123/api/services/light/turn_on"
+    headers:
+      Authorization: "Bearer YOUR_LONG_LIVED_TOKEN"
+      Content-Type: "application/json"
+    body: '{"entity_id":"light.living_room","brightness_step_pct":10}'
+  knob_ccw:
+    type: webhook
+    method: POST
+    url: "http://homeassistant.local:8123/api/services/light/turn_on"
+    headers:
+      Authorization: "Bearer YOUR_LONG_LIVED_TOKEN"
+      Content-Type: "application/json"
+    body: '{"entity_id":"light.living_room","brightness_step_pct":-10}'
+  knob_click:
+    type: webhook
+    method: POST
+    url: "http://homeassistant.local:8123/api/services/light/toggle"
+    headers:
+      Authorization: "Bearer YOUR_LONG_LIVED_TOKEN"
+      Content-Type: "application/json"
+    body: '{"entity_id":"light.living_room"}'
+
+# ── LED feedback FROM Home Assistant ────────────────────────────────────────
+# HA can push state back to the pad's LEDs by calling the daemon's local HTTP
+# endpoint. From an HA automation action use rest_command, e.g.:
+#
+#   rest_command:
+#     padkit_key1_green:
+#       url: "http://DAEMON_HOST:8787/api/led/key"
+#       method: POST
+#       content_type: "application/json"
+#       payload: '{"slot":0,"color":"#00ff00"}'
+#
+# Then call rest_command.padkit_key1_green when, say, a door is locked.

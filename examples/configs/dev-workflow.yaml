@@ -1,0 +1,58 @@
+# PadKit daemon config — developer workflow (shell actions)
+# SPDX-License-Identifier: MIT
+#
+# A macropad tuned for a coding session: shell commands for the common loop,
+# tap/hold for a safe-vs-destructive pairing, and the knob for volume.
+# Adjust the commands to your project. All shell actions run through your OS
+# shell (sh -c on macOS/Linux, cmd /C on Windows).
+
+device:
+  vid: 0x1189
+  pid: 0x8890
+  usage_page: 0xFF60
+  suppress_keyboard: false
+
+server:
+  http_addr: "127.0.0.1:8787"
+  web_ui: true
+
+gestures:
+  hold_ms: 500
+
+bindings:
+  # key1: tap runs the test suite; hold runs it with coverage.
+  key1:
+    tap:  { type: shell, command: "cd ~/project && make test" }
+    hold: { type: shell, command: "cd ~/project && make test COVER=1" }
+
+  # key2: tap builds; hold does a clean build (destructive-ish, so it's the hold).
+  key2:
+    tap:  { type: shell, command: "cd ~/project && make build" }
+    hold: { type: shell, command: "cd ~/project && make clean && make build" }
+
+  # key3: git status in a terminal-notifier / desktop notification.
+  key3:
+    tap:  { type: shell, command: "cd ~/project && git status -s | head -20 | (command -v notify-send >/dev/null && xargs -0 notify-send 'git status' || cat)" }
+
+  # key4: open the local dev server URL in the browser (best-effort per OS).
+  key4:
+    tap:  { type: shell, command: "(command -v xdg-open >/dev/null && xdg-open http://localhost:3000) || (command -v open >/dev/null && open http://localhost:3000) || start http://localhost:3000" }
+
+  # key5: paste-friendly keystroke — inject a common shortcut into the editor.
+  key5:
+    tap:  { type: keystroke, keys: "ctrl+shift+b" }   # e.g. VS Code: run build task
+
+  # key6: tap flashes the key so you can confirm the pad is alive.
+  key6:
+    tap:  { type: led, led: { slot: 5, color: "#00aaff", flash: true, flash_ms: 250 } }
+
+  # Knob: system volume; click mutes.
+  knob_cw:
+    type: shell
+    command: "(command -v amixer >/dev/null && amixer set Master 5%+) || (command -v osascript >/dev/null && osascript -e 'set volume output volume ((output volume of (get volume settings)) + 6)')"
+  knob_ccw:
+    type: shell
+    command: "(command -v amixer >/dev/null && amixer set Master 5%-) || (command -v osascript >/dev/null && osascript -e 'set volume output volume ((output volume of (get volume settings)) - 6)')"
+  knob_click:
+    type: shell
+    command: "(command -v amixer >/dev/null && amixer set Master toggle) || (command -v osascript >/dev/null && osascript -e 'set volume with output muted')"

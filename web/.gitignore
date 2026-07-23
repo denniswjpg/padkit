@@ -1,0 +1,7 @@
+node_modules/
+dist/
+
+# Generated at build by scripts/copy-firmware.mjs (prebuild) from the canonical
+# firmware/padkit.bin — never edit or commit; the copy keeps the flashed image
+# from going stale.
+public/firmware/

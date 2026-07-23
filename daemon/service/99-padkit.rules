@@ -1,0 +1,17 @@
+# PadKit vendor-HID udev rule (Linux)
+# SPDX-License-Identifier: MIT
+#
+# Grants non-root users access to the PadKit vendor HID interface so the daemon
+# (and the WebHID browser tool) can open it without sudo.
+#
+# Install:
+#   sudo cp 99-padkit.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+#   # then replug the pad
+#
+# VID:PID = 1189:8890 (PadKit v0.2). TAG+="uaccess" hands the device to the
+# locally logged-in user via systemd-logind; the 0660 GROUP fallback covers
+# non-logind setups (add yourself to the plugdev group).
+
+KERNEL=="hidraw*", ATTRS{idVendor}=="1189", ATTRS{idProduct}=="8890", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1189", ATTRS{idProduct}=="8890", TAG+="uaccess", GROUP="plugdev", MODE="0660"

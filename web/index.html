@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Zero-install browser config tool for the PadKit CH552 macropad. Live-edit LEDs, brightness and the keymap over WebHID, then save to the pad's flash."
+    />
+    <title>PadKit Config</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <span class="cap"></span><span class="cap"></span><span class="cap"></span>
+          <span class="cap"></span><span class="cap"></span><span class="cap"></span>
+        </span>
+        <span class="brand-text">
+          <strong>PadKit</strong>
+          <small>Config</small>
+        </span>
+      </div>
+
+      <div class="topbar-actions">
+        <span id="conn-chip" class="chip chip-idle" role="status" aria-live="polite">
+          Not connected
+        </span>
+        <a class="btn btn-ghost" href="https://github.com/denniswjpg/padkit" target="_blank" rel="noopener">GitHub ↗</a>
+        <button
+          id="theme-toggle"
+          class="icon-btn"
+          type="button"
+          aria-label="Toggle light and dark theme"
+          title="Toggle theme"
+        >
+          <span class="theme-icon" aria-hidden="true">◐</span>
+        </button>
+        <button id="connect-btn" class="btn btn-primary" type="button">Connect</button>
+      </div>
+    </header>
+
+    <div id="unsupported" class="banner banner-error" hidden>
+      <strong>This browser can't talk to USB devices.</strong>
+      WebHID is required. Please use <b>Google Chrome</b> or <b>Microsoft Edge</b> on desktop
+      (over <code>https://</code> or <code>localhost</code>).
+    </div>
+
+    <main id="main">
+      <!-- Disconnected hero -->
+      <section id="hero" class="hero">
+        <h1>Configure your macropad in the browser</h1>
+        <p class="lead">
+          Connect a PadKit over USB to live-edit key colors, brightness, lighting effects and what
+          each key types — then save it to the pad's own flash. No install, no account, nothing
+          leaves your machine.
+        </p>
+        <button id="hero-connect" class="btn btn-primary btn-lg" type="button">
+          Connect a PadKit
+        </button>
+        <p class="hint">
+          Requires Chrome or Edge on desktop. Your browser will ask which device to share.
+        </p>
+        <ul class="hero-points">
+          <li><b>Keys</b> — recolor each cap and remap its shortcut.</li>
+          <li><b>Lighting</b> — brightness, effects and idle dimming.</li>
+          <li><b>Live monitor</b> — press a key and watch it register.</li>
+        </ul>
+      </section>
+
+      <!-- Connected app -->
+      <div id="app" class="app" hidden>
+        <section class="card" aria-labelledby="keys-h">
+          <div class="card-head">
+            <h2 id="keys-h">Keys</h2>
+            <p class="card-sub">Select a control to recolor it or change what it types.</p>
+          </div>
+
+          <div class="keys-layout">
+            <div class="keygrid" id="keygrid" role="group" aria-label="Key caps"></div>
+            <div class="knobcol" id="knobcol" role="group" aria-label="Knob controls"></div>
+          </div>
+
+          <div id="editor" class="editor" hidden></div>
+        </section>
+
+        <section class="card" aria-labelledby="light-h">
+          <div class="card-head">
+            <h2 id="light-h">Lighting</h2>
+            <p class="card-sub">Global brightness, animated effects and idle behavior.</p>
+          </div>
+          <div id="lighting" class="lighting"></div>
+        </section>
+
+        <section class="card" aria-labelledby="mon-h">
+          <div class="card-head">
+            <h2 id="mon-h">Live monitor</h2>
+            <p class="card-sub">Every physical event the pad reports appears here.</p>
+          </div>
+          <div class="monitor">
+            <ol id="monitor-log" class="monitor-log" aria-live="polite"></ol>
+            <button id="monitor-clear" class="btn btn-ghost btn-sm" type="button">Clear</button>
+          </div>
+        </section>
+
+        <section class="card card-muted" aria-labelledby="flash-h">
+          <div class="card-head">
+            <h2 id="flash-h">Firmware</h2>
+            <p class="card-sub">Update the pad's firmware over USB (separate tool).</p>
+          </div>
+          <a class="btn btn-ghost" href="./flash.html">Open firmware flasher →</a>
+        </section>
+      </div>
+    </main>
+
+    <footer id="savebar" class="savebar" hidden>
+      <div class="savebar-inner">
+        <span id="dirty" class="dirty dirty-clean">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="dirty-text">Saved</span>
+        </span>
+        <div class="savebar-btns">
+          <button id="reset-btn" class="btn btn-ghost" type="button">Reset to defaults</button>
+          <button id="save-btn" class="btn btn-primary" type="button">Save to device</button>
+        </div>
+      </div>
+    </footer>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,76 @@
+# PadKit companion daemon — example config
+# SPDX-License-Identifier: MIT
+#
+# Copy this to your OS config dir (the daemon auto-creates a starter there on
+# first run) or pass it with:  padkitd serve --config ./config.yaml
+#
+# Default config locations (padkitd picks this automatically):
+#   Linux:   ~/.config/padkit/config.yaml
+#   macOS:   ~/Library/Application Support/padkit/config.yaml
+#   Windows: %AppData%\padkit\config.yaml
+# Override with $PADKIT_CONFIG or --config.
+
+device:
+  vid: 0x1189            # PadKit v0.2 USB vendor id
+  pid: 0x8890            # ... product id
+  usage_page: 0xFF60     # open the VENDOR collection, never the keyboard one
+  # When true, the daemon sets SET_FLAGS bit0 (SUPPRESS_KEYBOARD): the pad stops
+  # emitting F13–F23 keystrokes and delivers input ONLY to the daemon. Turn this
+  # on when you want the daemon to fully own the pad with no keystroke leakage.
+  suppress_keyboard: false
+
+server:
+  http_addr: "127.0.0.1:8787"   # local API + web UI (loopback only)
+  web_ui: true                  # serve the config editor at http://127.0.0.1:8787
+
+gestures:
+  hold_ms: 400        # tap vs. hold threshold for the six keys (host-side timing)
+
+# bindings map a control (+gesture) to an action.
+#   The six keys (key1..key6) support tap/hold.
+#   Momentary controls (knob_cw, knob_ccw, knob_click, pushturn_cw,
+#   pushturn_ccw) take a single bare action.
+#
+# Action backends: keystroke | shell | webhook | led
+bindings:
+
+  # key1: tap runs a shell command; hold flashes the key red.
+  key1:
+    tap:  { type: shell, command: "notify-send 'PadKit' 'key1 tapped' || true" }
+    hold: { type: led, led: { slot: 0, color: "#ff0000", flash: true, flash_ms: 300 } }
+
+  # key2: tap injects a keyboard shortcut (best-effort per OS — see README).
+  key2:
+    tap: { type: keystroke, keys: "ctrl+shift+p" }
+
+  # key3: tap fires an HTTP webhook (e.g. Home Assistant). This is the API path.
+  key3:
+    tap:
+      type: webhook
+      method: POST
+      url: "http://homeassistant.local:8123/api/webhook/padkit_key3"
+      headers: { Content-Type: "application/json" }
+      body: '{"source":"padkit","key":3}'
+
+  # key4: tap types a literal snippet.
+  key4:
+    tap: { type: keystroke, text: "kubectl get pods -A\n" }
+
+  # Knob controls brightness up/down; click toggles a full-white "spotlight".
+  knob_cw:
+    type: led
+    led: { brightness: 255 }
+  knob_ccw:
+    type: led
+    led: { brightness: 40 }
+  knob_click:
+    type: led
+    led: { all_colors: ["#ffffff","#ffffff","#ffffff","#ffffff","#ffffff","#ffffff"] }
+
+  # Push-turn (press the knob and rotate) as a second axis.
+  pushturn_cw:
+    type: shell
+    command: "amixer set Master 5%+ || true"
+  pushturn_ccw:
+    type: shell
+    command: "amixer set Master 5%- || true"
